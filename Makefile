@@ -4,7 +4,7 @@ BUILD  ?= release
 CFLAGS  = -std=gnu11 -ffreestanding -Wall -Wextra
 LDFLAGS = -T linker.ld -ffreestanding -nostdlib
 ISO_DIR  = isodir
-OBJS     = boot.o kernel.o graphics.o terminal.o
+OBJS     = boot.o kernel.o graphics.o terminal.o bitmaps.o font_bitmaps.o
 
 ifeq ($(BUILD),debug)
 CFLAGS   += -O0 -g

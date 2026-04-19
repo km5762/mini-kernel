@@ -29,6 +29,6 @@ static void parse_multiboot(size_t address) {
 
 void kernel_main(unsigned long magic, unsigned long addr) {
   parse_multiboot(addr);
-  terminal_init(0xFFFFFF);
+  terminal_set_font_bitmaps(&uni2_terminus16);
   terminal_print_line("Hello, world!");
 }

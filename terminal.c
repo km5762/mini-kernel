@@ -1,20 +1,29 @@
+#pragma once
+
 #include "terminal.h"
+#include "bitmaps.h"
 #include "graphics.h"
 
 struct terminal {
   size_t x;
   size_t y;
-  uint32_t color;
+  const struct font_bitmaps *font_bitmaps;
 };
 
 static struct terminal terminal;
 
-void terminal_init(uint32_t color) { terminal.color = color; }
+void terminal_set_font_bitmaps(const struct font_bitmaps *bitmaps) {
+  terminal.font_bitmaps = bitmaps;
+}
 
 void terminal_print_line(const char *line) {
+  size_t line_height = 0;
   for (size_t i = 0; line[i] != '\0'; ++i) {
-    graphics_draw_character(terminal.x, terminal.y, line[i], terminal.color);
-    terminal.x += 8;
+    const struct bitmap *bitmap =
+        &terminal.font_bitmaps->data[(unsigned char)line[i]];
+    graphics_draw_bitmap(terminal.x, terminal.y, bitmap);
+    terminal.x += bitmap->width;
+    line_height = bitmap->height;
   }
-  terminal.y += 8;
+  terminal.y += line_height;
 }

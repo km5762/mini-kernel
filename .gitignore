@@ -1,2 +1,6 @@
 *.o
 *.bin
+*.iso
+*.elf
+isodir/*
+compile_commands.json

@@ -3,4 +3,5 @@
 *.iso
 *.elf
 isodir/*
+build/*
 compile_commands.json

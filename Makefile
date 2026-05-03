@@ -1,10 +1,16 @@
 CC      = i686-elf-gcc
 LD      = i686-elf-gcc
 BUILD  ?= release
-CFLAGS  = -std=gnu11 -ffreestanding -Wall -Wextra
+CFLAGS  = -std=gnu23 -ffreestanding -Wall -Wextra -Iinclude
 LDFLAGS = -T linker.ld -ffreestanding -nostdlib
 ISO_DIR  = isodir
-OBJS     = boot.o kernel.o graphics.o terminal.o bitmaps.o font_bitmaps.o
+BUILD_DIR = build
+SRC_DIR = src
+C_SOURCES = $(wildcard $(SRC_DIR)/*.c)
+ASM_SOURCES = $(wildcard $(SRC_DIR)/*.s)
+
+OBJS = $(C_SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o) \
+       $(ASM_SOURCES:$(SRC_DIR)/%.s=$(BUILD_DIR)/%.o)
 
 ifeq ($(BUILD),debug)
 CFLAGS   += -O0 -g
@@ -29,10 +35,12 @@ all: iso
 $(ELF_NAME): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) -lgcc
 
-%.o: %.s
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.c
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
+	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 iso: $(ELF_NAME)
@@ -49,4 +57,4 @@ gdb:
 	i686-elf-gdb kernel-debug.elf -ex "target remote localhost:1234"
 
 clean:
-	rm -rf *.o *.elf *.iso $(ISO_DIR)
+	rm -rf *.o *.elf *.iso $(ISO_DIR) $(BUILD) $(BUILD_DIR)

@@ -1,39 +1,39 @@
 #include "panic.h"
 
-static void panic_sink_terminal_write(const char *message, void *context) {
-  struct terminal *terminal = context;
+static void panic_handler_terminal(const char *message,
+                                   const struct panic_context *context,
+                                   void *data) {
+  struct terminal *terminal = data;
+
+  terminal_print(terminal,
+                 "\n================ KERNEL PANIC ================\n");
+
+  terminal_print(terminal, "Message: ");
   terminal_print(terminal, message);
-}
+  terminal_print(terminal, "\n");
 
-struct panic_sink create_panic_sink_terminal(struct terminal *terminal) {
-  struct panic_sink sink = {panic_sink_terminal_write, terminal};
-  return sink;
-}
+  terminal_print(terminal, "Location: ");
+  terminal_print(terminal, context->file);
+  terminal_print(terminal, ":");
 
-static void sink_write(struct panic_sink *sink, const char *msg) {
-  sink->write(msg, sink->context);
-}
+  terminal_print(terminal, " (");
+  terminal_print(terminal, context->function);
+  terminal_print(terminal, ")\n");
 
-void panic(const char *message, struct panic_sink *sink, const char *file,
-           int line, const char *function) {
-
-  sink_write(sink, "\n================ KERNEL PANIC ================\n");
-
-  sink_write(sink, "Message: ");
-  sink_write(sink, message);
-  sink_write(sink, "\n");
-
-  sink_write(sink, "Location: ");
-  sink_write(sink, file);
-  sink_write(sink, ":");
-
-  sink_write(sink, " (");
-  sink_write(sink, function);
-  sink_write(sink, ")\n");
-
-  sink_write(sink, "==============================================\n");
+  terminal_print(terminal, "==============================================\n");
 
   for (;;) {
     __asm__ volatile("hlt");
   }
+}
+
+struct panic_handler create_panic_handler_terminal(struct terminal *terminal) {
+  struct panic_handler handler = {panic_handler_terminal, terminal};
+  return handler;
+}
+
+void panic(const char *message, struct panic_handler *handler, const char *file,
+           int line, const char *function) {
+  const struct panic_context context = {file, line, function};
+  handler->handle(message, &context, handler->data);
 }

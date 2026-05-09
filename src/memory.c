@@ -12,7 +12,7 @@
 // };
 
 struct memory memory_create(const struct memory_map *memory_map,
-                            struct panic_sink *panic_sink) {
+                            struct panic_handler *panic_handler) {
   struct free_list_node *last = nullptr;
   struct free_list_node *first = nullptr;
   for (size_t i = 0; i < memory_map->size; ++i) {
@@ -37,7 +37,7 @@ struct memory memory_create(const struct memory_map *memory_map,
     }
   }
 
-  const struct memory memory = {first, panic_sink};
+  const struct memory memory = {first, panic_handler};
   return memory;
 }
 
@@ -93,5 +93,6 @@ void *memory_allocate(struct memory *memory, size_t bytes) {
     last = node;
   }
 
-  PANIC("Out of memory", memory->panic_sink);
+  PANIC("Out of memory", memory->panic_handler);
+  return nullptr;
 }

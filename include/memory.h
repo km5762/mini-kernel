@@ -13,7 +13,7 @@ struct free_list_node {
 
 struct memory {
   struct free_list_node *free_list;
-  struct panic_sink *panic_sink;
+  struct panic_handler *panic_handler;
 };
 
 struct memory_map {
@@ -22,5 +22,5 @@ struct memory_map {
 };
 
 struct memory memory_create(const struct memory_map *memory_map,
-                            struct panic_sink *panic_sink);
+                            struct panic_handler *panic_handler);
 void *memory_allocate(struct memory *memory, size_t bytes);

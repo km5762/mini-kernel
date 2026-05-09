@@ -2,16 +2,22 @@
 
 #include "terminal.h"
 
-struct panic_sink {
-  void (*write)(const char *message, void *context);
-  void *context;
+struct panic_context {
+  const char *file;
+  const int line;
+  const char *function;
 };
 
-struct panic_sink create_panic_sink_terminal(struct terminal *terminal);
+struct panic_handler {
+  void (*handle)(const char *message, const struct panic_context *context,
+                 void *arguments);
+  void *data;
+};
 
-#define PANIC(message, sink)                                                   \
-  (panic(message, sink, __FILE__, __LINE__, __func__))
+struct panic_handler create_panic_handler_terminal(struct terminal *terminal);
 
-[[noreturn]]
-void panic(const char *message, struct panic_sink *sink, const char *file,
+#define PANIC(message, handler)                                                \
+  (panic(message, handler, __FILE__, __LINE__, __func__))
+
+void panic(const char *message, struct panic_handler *handler, const char *file,
            int line, const char *function);

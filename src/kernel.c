@@ -25,7 +25,7 @@ static void parse_multiboot(size_t address, struct kernel *kernel) {
           (const struct framebuffer_info *)base;
       kernel->graphics = graphics_create(framebuffer_info);
       kernel->terminal = terminal_create(&kernel->graphics, &uni2_terminus16);
-      kernel->panic_handler = create_panic_handler_terminal(&kernel->terminal);
+      kernel->panic_handler = panic_create_handler_terminal(&kernel->terminal);
       break;
     case MEMORY_MAP:;
       const struct multiboot_memory_map *memory_map_tag =

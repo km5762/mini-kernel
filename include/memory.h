@@ -6,13 +6,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct free_list_node {
+struct memory_free_block {
   size_t size;
-  struct free_list_node *next;
+  struct memory_free_block *next;
 };
 
 struct memory {
-  struct free_list_node *free_list;
+  struct memory_free_block *free_list;
   struct panic_handler *panic_handler;
 };
 

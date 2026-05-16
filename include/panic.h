@@ -10,11 +10,11 @@ struct panic_context {
 
 struct panic_handler {
   void (*handle)(const char *message, const struct panic_context *context,
-                 void *arguments);
+                 void *data);
   void *data;
 };
 
-struct panic_handler create_panic_handler_terminal(struct terminal *terminal);
+struct panic_handler panic_create_handler_terminal(struct terminal *terminal);
 
 #define PANIC(message, handler)                                                \
   (panic(message, handler, __FILE__, __LINE__, __func__))

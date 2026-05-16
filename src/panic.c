@@ -27,7 +27,7 @@ static void panic_handler_terminal(const char *message,
   }
 }
 
-struct panic_handler create_panic_handler_terminal(struct terminal *terminal) {
+struct panic_handler panic_create_handler_terminal(struct terminal *terminal) {
   struct panic_handler handler = {panic_handler_terminal, terminal};
   return handler;
 }

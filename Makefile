@@ -5,11 +5,15 @@ BUILD ?= release
 
 SRC_DIR    := src
 BUILD_DIR  := build
-ISO_DIR    := $(BUILD_DIR)/iso
+BUILD_ROOT := $(BUILD_DIR)/$(BUILD)
+ISO_DIR    := $(BUILD_ROOT)/iso
 
-TARGET_DIR := $(BUILD_DIR)/target
-HOST_DIR   := $(BUILD_DIR)/host
-TEST_DIR   := test
+TARGET_DIR := $(BUILD_ROOT)/target
+HOST_DIR   := $(BUILD_ROOT)/host
+
+TEST_DIR      := test
+TEST_UTIL_DIR := $(TEST_DIR)/utilities
+
 UNITY_DIR  := unity
 
 C_SRCS   := $(wildcard $(SRC_DIR)/*.c)
@@ -22,32 +26,43 @@ TARGET_OBJS := \
 HOST_OBJS := \
 	$(C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
 
-TEST_SRCS := $(wildcard $(TEST_DIR)/*.c)
-TEST_BINS := $(TEST_SRCS:$(TEST_DIR)/%.c=$(BUILD_DIR)/test/%)
+TEST_SRCS := \
+	$(filter-out $(TEST_UTIL_DIR)/%.c,$(wildcard $(TEST_DIR)/*.c))
 
-UNITY_OBJ := $(BUILD_DIR)/test/unity.o
+TEST_BINS := \
+	$(TEST_SRCS:$(TEST_DIR)/%.c=$(BUILD_ROOT)/test/%)
+
+TEST_UTIL_SRCS := \
+	$(wildcard $(TEST_UTIL_DIR)/*.c)
+
+TEST_UTIL_OBJS := \
+	$(TEST_UTIL_SRCS:$(TEST_UTIL_DIR)/%.c=$(BUILD_ROOT)/test/utilities/%.o)
+
+UNITY_OBJ := $(BUILD_ROOT)/test/unity.o
 
 COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -Iinclude
-
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding
-HOST_CFLAGS   := $(COMMON_CFLAGS)
-
 LDFLAGS := -T linker.ld -ffreestanding -nostdlib
-
 ifeq ($(BUILD),debug)
-	TARGET_CFLAGS += -O0 -g
+	COMMON_CFLAGS += -O0 -g
 	LDFLAGS       += -g
+
 	ELF_NAME := kernel-debug.elf
 	ISO_NAME := kernel-debug.iso
+
 	QEMUFLAGS := -s -S
 else
-	TARGET_CFLAGS += -O2
+	COMMON_CFLAGS += -O2
+
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding
+HOST_CFLAGS := \
+	$(COMMON_CFLAGS) \
+	-I$(UNITY_DIR) \
 
-ELF := $(BUILD_DIR)/$(ELF_NAME)
-ISO := $(BUILD_DIR)/$(ISO_NAME)
+ELF := $(BUILD_ROOT)/$(ELF_NAME)
+ISO := $(BUILD_ROOT)/$(ISO_NAME)
 
 .PHONY: all iso run gdb test clean
 
@@ -72,23 +87,38 @@ $(UNITY_OBJ): $(UNITY_DIR)/unity.c
 	@mkdir -p $(@D)
 	$(HOST_CC) $(HOST_CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/test/%: $(TEST_DIR)/%.c $(HOST_OBJS) $(UNITY_OBJ)
+$(BUILD_ROOT)/test/utilities/%.o: $(TEST_UTIL_DIR)/%.c
 	@mkdir -p $(@D)
-	$(HOST_CC) $(HOST_CFLAGS) $^ -o $@ -Iunity
+	$(HOST_CC) $(HOST_CFLAGS) -c $< -o $@
+
+$(BUILD_ROOT)/test/%: \
+	$(TEST_DIR)/%.c \
+	$(HOST_OBJS) \
+	$(TEST_UTIL_OBJS) \
+	$(UNITY_OBJ)
+
+	@mkdir -p $(@D)
+
+	$(HOST_CC) \
+		$(HOST_CFLAGS) \
+		$^ \
+		-o $@
+
+test: $(TEST_BINS)
+	@for t in $^; do ./$$t; done
 
 iso: $(ISO)
 
 $(ISO): $(ELF)
 	@mkdir -p $(ISO_DIR)/boot/grub
+
 	cp $< $(ISO_DIR)/boot/kernel.elf
 	cp grub.cfg $(ISO_DIR)/boot/grub/grub.cfg
+
 	grub-mkrescue -o $@ $(ISO_DIR)
 
 run: iso
 	qemu-system-i386 -cdrom $(ISO) $(QEMUFLAGS)
 
-test: $(TEST_BINS)
-	@for t in $^; do ./$$t; done
-
 clean:
-	$(RM) -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_ROOT)

@@ -3,12 +3,15 @@
 #include "multiboot.h"
 #include "panic.h"
 
+#include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
 
+typedef size_t memory_header;
 struct memory_free_block {
-  size_t size;
+  memory_header header;
   struct memory_free_block *next;
+  struct memory_free_block *previous;
 };
 
 struct memory {
@@ -24,3 +27,4 @@ struct memory_map {
 struct memory memory_create(const struct memory_map *memory_map,
                             struct panic_handler *panic_handler);
 void *memory_allocate(struct memory *memory, size_t bytes);
+void memory_free(struct memory *memory, void *allocation);

@@ -97,7 +97,7 @@ static void not_enough_space_for_meta() {
 
 static void allocate_0() {
   const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_free_block),
+      {address(0), sizeof(struct memory_block),
        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
   };
 
@@ -106,7 +106,7 @@ static void allocate_0() {
 
   void *allocation = memory_allocate(&ctx.memory, 0);
 
-  TEST_ASSERT_EQUAL(address(0) + sizeof(struct memory_free_block),
+  TEST_ASSERT_EQUAL(address(0) + sizeof(struct memory_block),
                     (uintptr_t)allocation);
 
   assert_no_panic(&ctx);
@@ -114,7 +114,7 @@ static void allocate_0() {
 
 static void allocate_perfect_fit() {
   const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_free_block) + 1,
+      {address(0), sizeof(struct memory_block) + 1,
        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
   };
 
@@ -130,7 +130,7 @@ static void allocate_perfect_fit() {
 static void allocate_perfect_fit_middle() {
   const struct multiboot_memory_map_entry entries[] = {
       {address(0), 1, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-      {address(0), sizeof(struct memory_free_block) + 1,
+      {address(0), sizeof(struct memory_block) + 1,
        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
       {address(0), 1, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
   };
@@ -146,7 +146,7 @@ static void allocate_perfect_fit_middle() {
 
 static void allocate_with_1_remaining_byte() {
   const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_free_block) + 2,
+      {address(0), sizeof(struct memory_block) + 2,
        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
   };
 
@@ -161,7 +161,7 @@ static void allocate_with_1_remaining_byte() {
 
 static void allocate_with_space_remaining() {
   const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_free_block) * 2 + 32,
+      {address(0), sizeof(struct memory_block) * 2 + 32,
        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
   };
 
@@ -179,6 +179,27 @@ static void allocate_with_space_remaining() {
   assert_no_panic(&ctx);
 }
 
+// static void reserve() {
+//   const struct multiboot_memory_map_entry entries[] = {
+//       {address(0), sizeof(struct memory_free_block) + 2,
+//        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
+//   };
+//
+//   struct test_context ctx;
+//   INIT_CONTEXT(ctx, entries);
+//
+//   void *allocation = memory_reserve(
+//       &ctx.memory, address(0) + sizeof(struct memory_free_block), 1);
+//
+//   assert_valid_allocation(allocation, &ctx.memory_map);
+//   assert_no_panic(&ctx);
+//
+//   allocation = memory_allocate(&ctx.memory, 1);
+//
+//   TEST_ASSERT_NULL(allocation);
+//   assert_panicked(&ctx);
+// }
+
 int main(void) {
   UNITY_BEGIN();
 
@@ -189,6 +210,7 @@ int main(void) {
   RUN_TEST(allocate_perfect_fit_middle);
   RUN_TEST(allocate_with_1_remaining_byte);
   RUN_TEST(allocate_with_space_remaining);
+  // RUN_TEST(reserve);
 
   return UNITY_END();
 }

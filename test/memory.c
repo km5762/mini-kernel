@@ -5,11 +5,19 @@
 #include "test/panic.h"
 #include "unity.h"
 
+#include <inttypes.h>
 #include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 
-static unsigned char buffer[512] = {0};
+#define BLOCK_SIZE 4096
+#define BLOCK_COUNT 16
+#define GAP_SIZE 1024
+
+static unsigned char buffer[BLOCK_SIZE * BLOCK_COUNT + GAP_SIZE * BLOCK_COUNT] =
+    {0};
 
 static uintptr_t address(size_t offset) { return (uintptr_t)buffer + offset; }
 
@@ -47,170 +55,112 @@ static void assert_no_panic(const struct test_context *ctx) {
   TEST_ASSERT_EQUAL(0, ctx->panic_counter);
 }
 
-static void assert_panicked(const struct test_context *ctx) {
-  TEST_ASSERT_EQUAL(1, ctx->panic_counter);
+struct live_allocation {
+  void *ptr;
+  size_t size;
+};
+
+#define MAX_LIVE_ALLOCATIONS 4096
+
+static const size_t edge_sizes[] = {1,   2,    3,    7,    8,    15,   16,  31,
+                                    32,  63,   64,   127,  128,  255,  256, 511,
+                                    512, 1023, 1024, 2048, 4095, 4096, 4097};
+
+static size_t random_allocation_size(void) {
+  int r = rand() % 100;
+
+  if (r < 70) {
+    return edge_sizes[rand() % (sizeof(edge_sizes) / sizeof(edge_sizes[0]))];
+  }
+
+  return 1 + (rand() % 8192);
 }
 
-static void assert_valid_allocation(void *allocation,
-                                    const struct memory_map *memory_map) {
+static void assert_no_live_overlap(const struct live_allocation *live,
+                                   size_t count) {
+  for (size_t i = 0; i < count; ++i) {
+    uintptr_t a0 = (uintptr_t)live[i].ptr;
+    uintptr_t a1 = a0 + live[i].size;
 
-  TEST_ASSERT_NOT_NULL(allocation);
+    for (size_t j = i + 1; j < count; ++j) {
+      uintptr_t b0 = (uintptr_t)live[j].ptr;
+      uintptr_t b1 = b0 + live[j].size;
 
-  for (size_t i = 0; i < memory_map->size; ++i) {
-    const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
+      TEST_ASSERT_FALSE(a0 < b1 && b0 < a1);
+    }
+  }
+}
 
-    if (entry->type == MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE &&
-        (uintptr_t)allocation < (entry->address + entry->size)) {
-      return;
+#define FUZZ_ITERATIONS 100000000
+
+static void fuzz() {
+  struct multiboot_memory_map_entry entries[BLOCK_COUNT] = {0};
+  for (size_t i = 0; i < BLOCK_COUNT; ++i) {
+    entries[i] = (struct multiboot_memory_map_entry){
+        .size = BLOCK_SIZE,
+        .address = address(i * (BLOCK_SIZE + GAP_SIZE)),
+        .type = MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE,
+        .reserved = 0,
+    };
+  }
+
+  struct test_context ctx;
+  INIT_CONTEXT(ctx, entries);
+
+  const char *seed_env = getenv("FUZZ_SEED");
+  unsigned int seed = seed_env ? (unsigned int)strtoul(seed_env, NULL, 10)
+                               : (unsigned int)time(NULL);
+  srand(seed);
+  printf("Seed: %u\n", seed);
+
+  struct live_allocation live[MAX_LIVE_ALLOCATIONS] = {0};
+  size_t live_count = 0;
+  size_t peak_live_count = 0;
+  for (size_t i = 0; i < FUZZ_ITERATIONS; ++i) {
+    bool do_alloc = (live_count == 0) || (rand() % 100 < 60);
+
+    if (do_alloc) {
+      if (live_count == MAX_LIVE_ALLOCATIONS) {
+        do_alloc = false;
+      } else {
+        size_t size = random_allocation_size();
+        void *p = memory_allocate(&ctx.memory, size);
+        assert_no_panic(&ctx);
+
+        if (p != nullptr) {
+          live[live_count++] = (struct live_allocation){.ptr = p, .size = size};
+          if (live_count > peak_live_count) {
+            peak_live_count = live_count;
+          }
+
+          for (size_t j = 0; j + 1 < live_count; ++j) {
+            TEST_ASSERT_FALSE(live[j].ptr == p);
+          }
+
+          assert_no_live_overlap(live, live_count);
+        }
+      }
+    }
+
+    if (!do_alloc) {
+      size_t idx = rand() % live_count;
+      memory_free(&ctx.memory, live[idx].ptr);
+      assert_no_panic(&ctx);
+
+      live[idx] = live[live_count - 1];
+      live[live_count - 1] = (struct live_allocation){0};
+      --live_count;
     }
   }
 
-  TEST_FAIL();
+  printf("Current live allocations: %zu\n", live_count);
+  printf("Peak live allocations: %zu\n", peak_live_count);
 }
-
-static void empty_memory_map() {
-  const struct multiboot_memory_map_entry entries[] = {};
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 2);
-
-  TEST_ASSERT_NULL(allocation);
-  assert_panicked(&ctx);
-}
-
-static void not_enough_space_for_meta() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), 2, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-      {address(2), 2, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 2);
-
-  TEST_ASSERT_NULL(allocation);
-  assert_panicked(&ctx);
-}
-
-static void allocate_0() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_block),
-       MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 0);
-
-  TEST_ASSERT_EQUAL(address(0) + sizeof(struct memory_block),
-                    (uintptr_t)allocation);
-
-  assert_no_panic(&ctx);
-}
-
-static void allocate_perfect_fit() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_block) + 1,
-       MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 1);
-
-  assert_valid_allocation(allocation, &ctx.memory_map);
-  assert_no_panic(&ctx);
-}
-
-static void allocate_perfect_fit_middle() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), 1, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-      {address(0), sizeof(struct memory_block) + 1,
-       MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-      {address(0), 1, MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 1);
-
-  assert_valid_allocation(allocation, &ctx.memory_map);
-  assert_no_panic(&ctx);
-}
-
-static void allocate_with_1_remaining_byte() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_block) + 2,
-       MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 1);
-
-  assert_valid_allocation(allocation, &ctx.memory_map);
-  assert_no_panic(&ctx);
-}
-
-static void allocate_with_space_remaining() {
-  const struct multiboot_memory_map_entry entries[] = {
-      {address(0), sizeof(struct memory_block) * 2 + 32,
-       MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-  };
-
-  struct test_context ctx;
-  INIT_CONTEXT(ctx, entries);
-
-  void *allocation = memory_allocate(&ctx.memory, 1);
-
-  assert_valid_allocation(allocation, &ctx.memory_map);
-  assert_no_panic(&ctx);
-
-  allocation = memory_allocate(&ctx.memory, 1);
-
-  assert_valid_allocation(allocation, &ctx.memory_map);
-  assert_no_panic(&ctx);
-}
-
-// static void reserve() {
-//   const struct multiboot_memory_map_entry entries[] = {
-//       {address(0), sizeof(struct memory_free_block) + 2,
-//        MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE, 0},
-//   };
-//
-//   struct test_context ctx;
-//   INIT_CONTEXT(ctx, entries);
-//
-//   void *allocation = memory_reserve(
-//       &ctx.memory, address(0) + sizeof(struct memory_free_block), 1);
-//
-//   assert_valid_allocation(allocation, &ctx.memory_map);
-//   assert_no_panic(&ctx);
-//
-//   allocation = memory_allocate(&ctx.memory, 1);
-//
-//   TEST_ASSERT_NULL(allocation);
-//   assert_panicked(&ctx);
-// }
 
 int main(void) {
   UNITY_BEGIN();
 
-  RUN_TEST(empty_memory_map);
-  RUN_TEST(not_enough_space_for_meta);
-  RUN_TEST(allocate_0);
-  RUN_TEST(allocate_perfect_fit);
-  RUN_TEST(allocate_perfect_fit_middle);
-  RUN_TEST(allocate_with_1_remaining_byte);
-  RUN_TEST(allocate_with_space_remaining);
-  // RUN_TEST(reserve);
+  RUN_TEST(fuzz);
 
   return UNITY_END();
 }

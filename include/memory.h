@@ -27,4 +27,5 @@ struct memory_map {
 struct memory memory_create(const struct memory_map *memory_map,
                             struct panic_handler *panic_handler);
 void *memory_allocate(struct memory *memory, size_t bytes);
+void *memory_reserve(struct memory *memory, uintptr_t address, size_t bytes);
 void memory_free(struct memory *memory, void *allocation);

@@ -45,11 +45,9 @@ static void parse_multiboot(size_t address, struct kernel *kernel) {
 }
 
 void kernel_main(unsigned long magic, unsigned long multiboot_address) {
-  const unsigned long multiboot2_bootloader_magic = 0x36d76289;
-  if (magic != multiboot2_bootloader_magic) {
-    return;
-  }
+  (void)magic;
   struct kernel kernel = {0};
   parse_multiboot(multiboot_address, &kernel);
   graphics_set_screen(&kernel.graphics, 0x1e1e2e);
+  terminal_print(&kernel.terminal, "HELLO\n");
 }

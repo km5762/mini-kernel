@@ -1,4 +1,4 @@
-#include "bitmaps.h"
+#include "graphics/bitmaps.h"
 
 void bitmaps_scale(struct bitmap *bitmap, size_t scale) {
   size_t scaled_pixel_size = scale * scale;

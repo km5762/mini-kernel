@@ -1,10 +1,9 @@
-#include "memory.h"
+#include "memory/memory.h"
 #include "panic.h"
 
 #include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
-
 
 typedef size_t memory_footer;
 

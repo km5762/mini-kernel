@@ -1,4 +1,4 @@
-#include "memory.h"
+#include "memory/memory.h"
 #include "array_utilites.h"
 #include "multiboot.h"
 

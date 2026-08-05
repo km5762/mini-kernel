@@ -1,10 +1,10 @@
-#include "font_bitmaps.h"
-#include "graphics.h"
-#include "interrupts.h"
-#include "memory.h"
+#include "cpu/interrupts.h"
+#include "graphics/font_bitmaps.h"
+#include "graphics/graphics.h"
+#include "graphics/terminal.h"
+#include "memory/memory.h"
 #include "multiboot.h"
 #include "panic.h"
-#include "terminal.h"
 
 #include <stddef.h>
 #include <stdint.h>

@@ -16,8 +16,8 @@ TEST_UTIL_DIR := $(TEST_DIR)/utilities
 
 UNITY_DIR  := unity
 
-C_SRCS   := $(wildcard $(SRC_DIR)/*.c)
-ASM_SRCS := $(wildcard $(SRC_DIR)/*.s)
+C_SRCS   := $(shell find $(SRC_DIR) -name '*.c')
+ASM_SRCS := $(shell find $(SRC_DIR) -name '*.s')
 
 TARGET_OBJS := \
 	$(C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
@@ -27,13 +27,13 @@ HOST_OBJS := \
 	$(C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
 
 TEST_SRCS := \
-	$(filter-out $(TEST_UTIL_DIR)/%.c,$(wildcard $(TEST_DIR)/*.c))
+    $(filter-out $(TEST_UTIL_DIR)/%,$(shell find $(TEST_DIR) -name '*.c'))
 
 TEST_BINS := \
 	$(TEST_SRCS:$(TEST_DIR)/%.c=$(BUILD_ROOT)/test/%)
 
 TEST_UTIL_SRCS := \
-	$(wildcard $(TEST_UTIL_DIR)/*.c)
+    $(shell find $(TEST_UTIL_DIR) -name '*.c')
 
 TEST_UTIL_OBJS := \
 	$(TEST_UTIL_SRCS:$(TEST_UTIL_DIR)/%.c=$(BUILD_ROOT)/test/utilities/%.o)

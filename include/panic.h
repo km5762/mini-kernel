@@ -1,6 +1,6 @@
 #pragma once
 
-#include "terminal.h"
+#include "graphics/terminal.h"
 
 struct panic_context {
   const char *file;

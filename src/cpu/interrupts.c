@@ -1,4 +1,4 @@
-#include "interrupts.h"
+#include "cpu/interrupts.h"
 
 #include <stdint.h>
 

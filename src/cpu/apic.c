@@ -1,5 +1,5 @@
-#include "cpuid_features.h"
-#include "msr.h"
+#include "cpu/cpuid_features.h"
+#include "cpu/msr.h"
 #include "panic.h"
 
 #include <cpuid.h>

@@ -1,7 +1,7 @@
-#include "terminal.h"
-#include "bitmaps.h"
-#include "font_bitmaps.h"
-#include "graphics.h"
+#include "graphics/terminal.h"
+#include "graphics/bitmaps.h"
+#include "graphics/font_bitmaps.h"
+#include "graphics/graphics.h"
 
 struct terminal terminal_create(const struct graphics *graphics,
                                 const struct font_bitmaps *font_bitmaps) {

@@ -12,6 +12,7 @@ struct bitmap_span {
 };
 
 void bitmap_set_range(bitmap_word *bitmap, size_t start, size_t size);
+void bitmap_clear_range(bitmap_word *bitmap, size_t start, size_t size);
 void bitmap_set(bitmap_word *bitmap, size_t index);
 void bitmap_clear(bitmap_word *bitmap, size_t index);
 int bitmap_find_first_set(struct bitmap_span span);

@@ -5,7 +5,7 @@
 static size_t bitmap_index(uintptr_t address) { return address / PAGE_SIZE; }
 static uintptr_t page_address(size_t index) { return index * PAGE_SIZE; }
 
-struct pages pages_init(const struct memory_map *memory_map) {
+struct pages pages_create(const struct memory_map *memory_map) {
   struct pages pages = {0};
   for (size_t i = 0; i < memory_map->size; ++i) {
     const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
@@ -44,4 +44,15 @@ void pages_free(struct pages *pages, uintptr_t address) {
 
   const size_t index = bitmap_index(address);
   bitmap_set(pages->bitmap, index);
+}
+
+uintptr_t pages_reserve(struct pages *pages, uintptr_t address,
+                        size_t n_pages) {
+  if (pages == nullptr) {
+    return 0;
+  }
+
+  const size_t start_index = bitmap_index(address);
+  bitmap_clear_range(pages->bitmap, start_index, n_pages);
+  return address;
 }

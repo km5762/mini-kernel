@@ -17,6 +17,7 @@ struct memory_map {
   size_t size;
 };
 
-struct pages pages_init(const struct memory_map *memory_map);
+struct pages pages_create(const struct memory_map *memory_map);
 uintptr_t pages_allocate(struct pages *pages);
+uintptr_t pages_reserve(struct pages *pages, uintptr_t address, size_t n_pages);
 void pages_free(struct pages *pages, uintptr_t address);

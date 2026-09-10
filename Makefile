@@ -1,4 +1,4 @@
-TARGET_CC := i686-elf-gcc
+TARGET_CC := x86_64-elf-gcc
 HOST_CC   := gcc
 
 BUILD ?= release
@@ -17,11 +17,11 @@ TEST_UTIL_DIR := $(TEST_DIR)/utilities
 UNITY_DIR  := unity
 
 C_SRCS   := $(shell find $(SRC_DIR) -name '*.c')
-ASM_SRCS := $(shell find $(SRC_DIR) -name '*.s')
+ASM_SRCS := $(shell find $(SRC_DIR) -name '*.S')
 
 TARGET_OBJS := \
 	$(C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
-	$(ASM_SRCS:$(SRC_DIR)/%.s=$(TARGET_DIR)/%.o)
+	$(ASM_SRCS:$(SRC_DIR)/%.S=$(TARGET_DIR)/%.o)
 
 HOST_OBJS := \
 	$(C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
@@ -41,7 +41,7 @@ TEST_UTIL_OBJS := \
 UNITY_OBJ := $(BUILD_ROOT)/test/unity.o
 
 COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -Iinclude
-LDFLAGS := -T linker.ld -ffreestanding -nostdlib
+LDFLAGS := -ffreestanding -nostdlib
 ifeq ($(BUILD),debug)
 	COMMON_CFLAGS += -O0 -g
 	LDFLAGS       += -g
@@ -56,26 +56,31 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=large -mno-red-zone
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
 
 ELF := $(BUILD_ROOT)/$(ELF_NAME)
 ISO := $(BUILD_ROOT)/$(ISO_NAME)
+LINKER_SCRIPT := $(BUILD_ROOT)/linker.ld
 
 .PHONY: all iso run gdb test clean
 
 all: iso
 
-$(ELF): $(TARGET_OBJS)
-	$(TARGET_CC) $(LDFLAGS) -o $@ $^ -lgcc
+$(ELF): $(TARGET_OBJS) $(LINKER_SCRIPT)
+	$(TARGET_CC) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(TARGET_OBJS) -lgcc
+
+$(LINKER_SCRIPT): linker.ld include/arch/x64/paging.h
+	@mkdir -p $(@D)
+	$(TARGET_CC) -E -P -x c -Iinclude $< -o $@
 
 $(TARGET_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 
-$(TARGET_DIR)/%.o: $(SRC_DIR)/%.s
+$(TARGET_DIR)/%.o: $(SRC_DIR)/%.S
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 
@@ -118,7 +123,7 @@ $(ISO): $(ELF)
 	grub-mkrescue -o $@ $(ISO_DIR)
 
 run: iso
-	qemu-system-i386 -cdrom $(ISO) $(QEMUFLAGS)
+	qemu-system-x86_64 -cdrom $(ISO) $(QEMUFLAGS)
 
 clean:
 	$(RM) -r $(BUILD_ROOT)

@@ -1,4 +1,4 @@
-#include "arch/x64/paging.h"
+#include "asm/paging.h"
 
 ENTRY(_start)
 
@@ -10,45 +10,42 @@ SECTIONS
   {
     KEEP(*(.rodata.multiboot))
     KEEP(*(.text.boot))
-  } 
+  }
 
-  . = KERNEL_VIRTUAL_BASE;
+  . += KERNEL_VIRTUAL_BASE;
+  . = ALIGN(4K);
 
-  HIDDEN(kernel_load_offset =
-             KERNEL_PHYSICAL_BASE + ALIGN(SIZEOF(.boot), 4K) - KERNEL_VIRTUAL_BASE);
-
-  .text : AT(ADDR(.text) + kernel_load_offset)
+  .text : AT(ADDR(.text) - KERNEL_VIRTUAL_BASE)
   {
     *(.text)
-  } 
+  }
 
   . = ALIGN(4K);
 
-  .rodata : AT(ADDR(.rodata) + kernel_load_offset)
+  .rodata : AT(ADDR(.rodata) - KERNEL_VIRTUAL_BASE)
   {
     *(.rodata)
-  } 
+  }
 
   . = ALIGN(4K);
 
-  .data : AT(ADDR(.data) + kernel_load_offset)
+  .data : AT(ADDR(.data) - KERNEL_VIRTUAL_BASE)
   {
     *(.data)
-  } 
+  }
 
   . = ALIGN(4K);
 
-  .bss : AT(ADDR(.bss) + kernel_load_offset)
+  .bss : AT(ADDR(.bss) - KERNEL_VIRTUAL_BASE)
   {
     *(COMMON)
     *(.bss)
-  } 
-
+  }
 }
 
-gdt_physical       = gdt       + kernel_load_offset;
-gdtr_physical       = gdtr       + kernel_load_offset;
-pml4_physical      = pml4      + kernel_load_offset;
-pdpt_low_physical  = pdpt_low  + kernel_load_offset;
-pdpt_high_physical = pdpt_high + kernel_load_offset;
-pd_physical        = pd        + kernel_load_offset;
+gdt_physical       = gdt       - KERNEL_VIRTUAL_BASE;
+gdtr_physical      = gdtr      - KERNEL_VIRTUAL_BASE;
+pml4_physical      = pml4      - KERNEL_VIRTUAL_BASE;
+pdpt_low_physical  = pdpt_low  - KERNEL_VIRTUAL_BASE;
+pdpt_high_physical = pdpt_high - KERNEL_VIRTUAL_BASE;
+pd_physical        = pd        - KERNEL_VIRTUAL_BASE;

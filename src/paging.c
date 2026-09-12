@@ -1,11 +1,12 @@
 #include "paging.h"
 #include "algorithms/bitmap.h"
+#include "asm/paging.h"
 #include "multiboot.h"
 
-static size_t bitmap_index(uintptr_t address) { return address / PAGE_SIZE; }
-static uintptr_t page_address(size_t index) { return index * PAGE_SIZE; }
+static size_t bitmap_index(uintptr_t address) { return address / PAGE_BYTES; }
+static uintptr_t page_address(size_t index) { return index * PAGE_BYTES; }
 
-struct pages pages_create(const struct memory_map *memory_map) {
+struct pages pages_create(const struct multiboot_memory_map *memory_map) {
   struct pages pages = {0};
   for (size_t i = 0; i < memory_map->size; ++i) {
     const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
@@ -15,7 +16,7 @@ struct pages pages_create(const struct memory_map *memory_map) {
     }
 
     const size_t start_index = bitmap_index(entry->address);
-    const size_t total_pages = entry->size / PAGE_SIZE;
+    const size_t total_pages = entry->size / PAGE_BYTES;
     bitmap_set_range(pages.bitmap, start_index, total_pages);
   }
   return pages;

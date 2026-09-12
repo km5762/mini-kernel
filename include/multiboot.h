@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 enum multiboot_tag_type : uint32_t { END = 0, MEMORY_MAP = 6, FRAMEBUFFER = 8 };
@@ -20,8 +21,13 @@ struct multiboot_memory_map_entry {
   uint32_t reserved;
 };
 
-struct multiboot_memory_map {
+struct multiboot_memory_map_tag {
   uint32_t entry_size;
   uint32_t entry_version;
   struct multiboot_memory_map_entry entries[];
+};
+
+struct multiboot_memory_map {
+  const struct multiboot_memory_map_entry *data;
+  size_t size;
 };

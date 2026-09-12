@@ -31,13 +31,14 @@ static void parse_multiboot(size_t address) {
       kernel.panic_handler = panic_create_handler_terminal(&kernel.terminal);
       break;
     case MEMORY_MAP:;
-      const struct multiboot_memory_map *memory_map_tag =
-          (const struct multiboot_memory_map *)base;
-      const size_t header_size =
-          sizeof(struct multiboot_tag) + sizeof(struct multiboot_memory_map);
+      const struct multiboot_memory_map_tag *memory_map_tag =
+          (const struct multiboot_memory_map_tag *)base;
+      const size_t header_size = sizeof(struct multiboot_tag) +
+                                 sizeof(struct multiboot_memory_map_tag);
       const size_t entries =
           (tag->size - header_size) / memory_map_tag->entry_size;
-      const struct memory_map memory_map = {memory_map_tag->entries, entries};
+      const struct multiboot_memory_map memory_map = {memory_map_tag->entries,
+                                                      entries};
       kernel.memory = memory_create(&memory_map, &kernel.panic_handler);
       break;
     case END:

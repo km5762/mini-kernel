@@ -1,6 +1,12 @@
+#pragma once
+
+#if !defined(__ASSEMBLER__) && !defined(LD_SCRIPT)
+#include <stdint.h>
+#endif
+
 #define KERNEL_PHYSICAL_BASE 0x200000
 #define KERNEL_VIRTUAL_BASE 0xffffffff80000000
-#define LOWER_HALF_ADDRESS(va) (va - KERNEL_VIRTUAL_BASE + kernel_)
+#define LOWER_HALF_ADDRESS(va) (va - KERNEL_VIRTUAL_BASE)
 #define PAGE_BYTES 4096
 #define PAGE_TABLE_BYTES 4096
 #define PAGE_ENTRY_BYTES 8

@@ -1,3 +1,4 @@
+ARCH ?= x86_64
 TARGET_CC := x86_64-elf-gcc
 HOST_CC   := gcc
 
@@ -16,15 +17,19 @@ TEST_UTIL_DIR := $(TEST_DIR)/utilities
 
 UNITY_DIR  := unity
 
-C_SRCS   := $(shell find $(SRC_DIR) -name '*.c')
-ASM_SRCS := $(shell find $(SRC_DIR) -name '*.S')
+ARCH_DIR := arch/$(ARCH)
+
+COMMON_C_SRCS := $(shell find $(SRC_DIR) -name '*.c')
+ARCH_C_SRCS := $(shell find $(ARCH_DIR) -name '*.c')
+ARCH_ASM_SRCS := $(shell find $(ARCH_DIR) -name '*.S')
 
 TARGET_OBJS := \
-	$(C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
-	$(ASM_SRCS:$(SRC_DIR)/%.S=$(TARGET_DIR)/%.o)
+	$(COMMON_C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
+	$(ARCH_C_SRCS:$(ARCH_DIR)/%.c=$(TARGET_DIR)/arch/$(ARCH)/%.o) \
+	$(ARCH_ASM_SRCS:$(ARCH_DIR)/%.S=$(TARGET_DIR)/arch/$(ARCH)/%.o)
 
 HOST_OBJS := \
-	$(C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
+	$(COMMON_C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
 
 TEST_SRCS := \
     $(filter-out $(TEST_UTIL_DIR)/%,$(shell find $(TEST_DIR) -name '*.c'))
@@ -40,7 +45,7 @@ TEST_UTIL_OBJS := \
 
 UNITY_OBJ := $(BUILD_ROOT)/test/unity.o
 
-COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -Iinclude
+COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -I$(ARCH_DIR) -Iinclude
 LDFLAGS := -ffreestanding -nostdlib
 ifeq ($(BUILD),debug)
 	COMMON_CFLAGS += -O0 -g
@@ -72,15 +77,23 @@ all: iso
 $(ELF): $(TARGET_OBJS) $(LINKER_SCRIPT)
 	$(TARGET_CC) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(TARGET_OBJS) -lgcc
 
-$(LINKER_SCRIPT): linker.ld include/arch/x64/paging.h
+$(LINKER_SCRIPT): linker.ld
 	@mkdir -p $(@D)
-	$(TARGET_CC) -E -P -x c -Iinclude $< -o $@
+	$(TARGET_CC) -E -P -x c $(COMMON_CFLAGS) -DLD_SCRIPT $< -o $@
 
 $(TARGET_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 
 $(TARGET_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+
+$(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.c
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+
+$(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.S
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 

@@ -28,7 +28,7 @@ enum {
   MEMORY_HEADER_LAST_IN_REGION = (size_t)1 << 2,
 };
 
-struct memory memory_create(const struct memory_map *memory_map,
+struct memory memory_create(const struct multiboot_memory_map *memory_map,
                             struct panic_handler *panic_handler) {
   struct memory_free_block *previous = nullptr;
   struct memory_free_block *first = nullptr;

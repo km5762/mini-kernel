@@ -1,4 +1,4 @@
-#include "arch/x64/paging.h"
+#include "asm/paging.h"
 .intel_syntax noprefix
 
 .set magic, 0xe85250d6
@@ -79,7 +79,8 @@ pdpt_high:
 .global pd
 pd:
     .quad KERNEL_PHYSICAL_BASE + flags + PAGE_ENTRY_LARGE
-    .zero ((PAGE_TABLE_BYTES - 1) * PAGE_ENTRY_BYTES)
+    .quad KERNEL_PHYSICAL_BASE + flags + PAGE_ENTRY_LARGE
+    .zero ((PAGE_TABLE_BYTES - 2) * PAGE_ENTRY_BYTES)
 
 .section .text
 .code32

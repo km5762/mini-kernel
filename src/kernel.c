@@ -4,6 +4,7 @@
 #include "graphics/terminal.h"
 #include "memory/memory.h"
 #include "multiboot.h"
+#include "paging.h"
 #include "panic.h"
 
 #include <stddef.h>
@@ -13,6 +14,7 @@ struct kernel {
   struct graphics graphics;
   struct terminal terminal;
   struct memory memory;
+  struct page_pool page_pool;
   struct panic_handler panic_handler;
 };
 
@@ -39,7 +41,7 @@ static void parse_multiboot(size_t address) {
           (tag->size - header_size) / memory_map_tag->entry_size;
       const struct multiboot_memory_map memory_map = {memory_map_tag->entries,
                                                       entries};
-      kernel.memory = memory_create(&memory_map, &kernel.panic_handler);
+      kernel.page_pool = page_pool_create(&memory_map, &kernel.panic_handler);
       break;
     case END:
       break;

@@ -53,7 +53,14 @@ gdtr:
   .short gdt_end - gdt - 1
   .quad gdt_physical
 
-.section .data
+.section .bss.page
+.balign 4096
+.equ page_bss_bytes, 8 * 1024 * 1024
+.global page_bss
+page_bss:
+.skip page_bss_bytes
+
+.section .data.page
 .equ flags, (PAGE_ENTRY_PRESENT | PAGE_ENTRY_WRITABLE)
 .balign 4096
 .global pml4
@@ -65,22 +72,31 @@ pml4:
 .balign 4096
 .global pdpt_low
 pdpt_low:
-    .quad pd_physical + flags
+    .quad pd_low_physical + flags
     .zero ((PAGE_TABLE_BYTES - 1) * PAGE_ENTRY_BYTES)
 
 .balign 4096
 .global pdpt_high
 pdpt_high:
     .zero (PDPT_INDEX(KERNEL_VIRTUAL_BASE) * PAGE_ENTRY_BYTES)
-    .quad pd_physical + flags
+    .quad pd_high_physical + flags
     .zero ((PAGE_TABLE_BYTES - 1 - PDPT_INDEX(KERNEL_VIRTUAL_BASE)) * PAGE_ENTRY_BYTES)
 
 .balign 4096
-.global pd
-pd:
+.global pd_low
+pd_low:
+    .zero (PD_INDEX(KERNEL_PHYSICAL_BASE) * PAGE_ENTRY_BYTES)
     .quad KERNEL_PHYSICAL_BASE + flags + PAGE_ENTRY_LARGE
-    .quad KERNEL_PHYSICAL_BASE + flags + PAGE_ENTRY_LARGE
-    .zero ((PAGE_TABLE_BYTES - 2) * PAGE_ENTRY_BYTES)
+    .zero ((PAGE_TABLE_BYTES - PAGE_ENTRY_BYTES) - (PD_INDEX(KERNEL_PHYSICAL_BASE) * PAGE_ENTRY_BYTES))
+
+.balign 4096
+.global pd_high
+pd_high:
+    .set page_index, 0
+    .rept 512
+        .quad (KERNEL_PHYSICAL_BASE + (page_index * PAGE_LARGE_BYTES)) + flags + PAGE_ENTRY_LARGE
+        .set page_index, page_index + 1
+    .endr
 
 .section .text
 .code32

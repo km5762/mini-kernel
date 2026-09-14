@@ -8,6 +8,7 @@
 #define KERNEL_VIRTUAL_BASE 0xffffffff80000000
 #define LOWER_HALF_ADDRESS(va) (va - KERNEL_VIRTUAL_BASE)
 #define PAGE_BYTES 4096
+#define PAGE_LARGE_BYTES 2097152
 #define PAGE_TABLE_BYTES 4096
 #define PAGE_ENTRY_BYTES 8
 #define PAGE_ENTRY_PRESENT 1
@@ -18,3 +19,6 @@
 #define PD_INDEX(va) (((va) >> 21) & 0x1ff)
 #define PT_INDEX(va) (((va) >> 12) & 0x1ff)
 #define PAGE_OFFSET(va) ((va) & 0xfff)
+
+// void page_map(uintptr_t physical_address, uintptr_t virtual_address,
+//               unsigned int flags);

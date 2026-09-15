@@ -61,10 +61,11 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=large -mno-red-zone
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=large -mno-red-zone -MMD -MP
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
+	-MMD -MP
 
 ELF := $(BUILD_ROOT)/$(ELF_NAME)
 ISO := $(BUILD_ROOT)/$(ISO_NAME)
@@ -77,7 +78,7 @@ all: iso
 $(ELF): $(TARGET_OBJS) $(LINKER_SCRIPT)
 	$(TARGET_CC) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(TARGET_OBJS) -lgcc
 
-$(LINKER_SCRIPT): linker.ld
+$(LINKER_SCRIPT): linker.ld $(ARCH_DIR)/asm/paging.h
 	@mkdir -p $(@D)
 	$(TARGET_CC) -E -P -x c $(COMMON_CFLAGS) -DLD_SCRIPT $< -o $@
 
@@ -127,7 +128,7 @@ test: $(TEST_BINS)
 
 iso: $(ISO)
 
-$(ISO): $(ELF)
+$(ISO): $(ELF) grub.cfg
 	@mkdir -p $(ISO_DIR)/boot/grub
 
 	cp $< $(ISO_DIR)/boot/kernel.elf
@@ -140,3 +141,11 @@ run: iso
 
 clean:
 	$(RM) -r $(BUILD_ROOT)
+
+DEPS := \
+	$(TARGET_OBJS:.o=.d) \
+	$(HOST_OBJS:.o=.d) \
+	$(TEST_UTIL_OBJS:.o=.d) \
+	$(UNITY_OBJ:.o=.d)
+
+-include $(DEPS)

@@ -1,11 +1,13 @@
 #include "graphics/graphics.h"
+#include "asm/paging.h"
 
 #include <stddef.h>
 #include <stdint.h>
 
 struct graphics graphics_create(const struct framebuffer_info *info) {
-  struct graphics graphics = {(uint32_t *)(uintptr_t)info->address, info->width,
-                              info->height, info->pitch / 4};
+  struct graphics graphics = {
+      (uint32_t *)(uintptr_t)HIGHER_HALF_ADDRESS(info->address), info->width,
+      info->height, info->pitch / 4};
   return graphics;
 }
 

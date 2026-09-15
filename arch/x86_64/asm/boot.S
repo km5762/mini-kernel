@@ -100,9 +100,11 @@ pdpt_high:
 	.global pd_low
 
 pd_low:
-	.zero (PD_INDEX(KERNEL_PHYSICAL_BASE) * PAGE_ENTRY_BYTES)
-	.quad KERNEL_PHYSICAL_BASE + flags + PAGE_ENTRY_LARGE
-	.zero ((PAGE_TABLE_BYTES - PAGE_ENTRY_BYTES) - (PD_INDEX(KERNEL_PHYSICAL_BASE) * PAGE_ENTRY_BYTES))
+	.set page_index, 0
+	.rept 512
+	.quad (page_index * PAGE_LARGE_BYTES) + flags + PAGE_ENTRY_LARGE
+	.set page_index, page_index + 1
+	.endr
 
 	.balign 4096
 	.global pd_high
@@ -110,7 +112,7 @@ pd_low:
 pd_high:
 	.set  page_index, 0
 	.rept 512
-	.quad (KERNEL_PHYSICAL_BASE + (page_index * PAGE_LARGE_BYTES)) + flags + PAGE_ENTRY_LARGE
+	.quad (page_index * PAGE_LARGE_BYTES) + flags + PAGE_ENTRY_LARGE
 	.set  page_index, page_index + 1
 	.endr
 

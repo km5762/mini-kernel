@@ -4,7 +4,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-  . = KERNEL_PHYSICAL_BASE;
+  . = 2M;
 
   .boot :
   {

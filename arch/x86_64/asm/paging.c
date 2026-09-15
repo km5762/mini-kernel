@@ -1,12 +1,16 @@
-#include "asm/paging.h"
-
-extern uint64_t pml4[512];
-
+// #include "asm/paging.h"
+// #include "paging.h"
+//
+// extern uint64_t pml4[512];
+//
 // void page_map(uintptr_t physical_address, uintptr_t virtual_address,
-//               unsigned int flags) {
+//               unsigned int flags, struct page_pool *page_pool) {
 //   uint64_t *pml4_entry = &pml4[PML4_INDEX(physical_address)];
-//   uint64_t *pdpt = if (*pml4_entry != 0 && *pml4_entry & PAGE_ENTRY_PRESENT)
-//   {
-//     *pml4_entry =
+//   const uintptr_t pdpt_address = HIGHER_HALF_ADDRESS((uintptr_t)pml4_entry);
+//   if (!(pdpt_address & PAGE_ENTRY_PRESENT)) {
+//     const uintptr_t page = page_pool_allocate(page_pool);
+//     if (!page) {
+//     }
+//     *pml4_entry = page_pool_allocate(page_pool);
 //   }
 // }

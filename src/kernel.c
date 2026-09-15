@@ -1,3 +1,4 @@
+#include "asm/paging.h"
 #include "cpu/interrupts.h"
 #include "graphics/font_bitmaps.h"
 #include "graphics/graphics.h"
@@ -32,17 +33,18 @@ static void parse_multiboot(size_t address) {
       kernel.terminal = terminal_create(&kernel.graphics, &uni2_terminus16);
       kernel.panic_handler = panic_create_handler_terminal(&kernel.terminal);
       break;
-    case MEMORY_MAP:;
-      const struct multiboot_memory_map_tag *memory_map_tag =
-          (const struct multiboot_memory_map_tag *)base;
-      const size_t header_size = sizeof(struct multiboot_tag) +
-                                 sizeof(struct multiboot_memory_map_tag);
-      const size_t entries =
-          (tag->size - header_size) / memory_map_tag->entry_size;
-      const struct multiboot_memory_map memory_map = {memory_map_tag->entries,
-                                                      entries};
-      kernel.page_pool = page_pool_create(&memory_map, &kernel.panic_handler);
-      break;
+    // case MEMORY_MAP:;
+    //   const struct multiboot_memory_map_tag *memory_map_tag =
+    //       (const struct multiboot_memory_map_tag *)base;
+    //   const size_t header_size = sizeof(struct multiboot_tag) +
+    //                              sizeof(struct multiboot_memory_map_tag);
+    //   const size_t entries =
+    //       (tag->size - header_size) / memory_map_tag->entry_size;
+    //   const struct multiboot_memory_map memory_map =
+    //   {memory_map_tag->entries,
+    //                                                   entries};
+    //   kernel.page_pool = page_pool_create(&memory_map,
+    //   &kernel.panic_handler); break;
     case END:
       break;
     }
@@ -58,7 +60,7 @@ void zero_handler() {
 
 void kernel_main(unsigned long magic, unsigned long multiboot_address) {
   (void)magic;
-  parse_multiboot(multiboot_address);
+  parse_multiboot(HIGHER_HALF_ADDRESS(multiboot_address));
   graphics_set_screen(&kernel.graphics, 0x1e1e2e);
   terminal_print(&kernel.terminal, "HELLO\n");
   // interrupts_init();

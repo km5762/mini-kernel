@@ -30,13 +30,13 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
       MATH_INT_CEILING_DIVIDE(total_pages, pages_per_word);
   const size_t bitmap_bytes = bitmap_words * sizeof(bitmap_word);
   const size_t bitmap_pages = MATH_INT_CEILING_DIVIDE(bitmap_bytes, PAGE_BYTES);
-  const size_t kernel_start_page = KERNEL_PHYSICAL_BASE / PAGE_BYTES;
+  const size_t kernel_start_page = 0;
   const size_t kernel_end_page =
       MATH_INT_CEILING_DIVIDE(kernel_physical_end, PAGE_BYTES);
   for (size_t i = 0; i < memory_map->size; ++i) {
     const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
     const uintptr_t end = entry->address + entry->size;
-    const bool kernel_memory_region = KERNEL_PHYSICAL_BASE >= entry->address;
+    const bool kernel_memory_region = 0 >= entry->address;
     ASSERT(!kernel_memory_region || kernel_physical_end < end, panic_handler);
 
     if (kernel_memory_region) {
@@ -72,8 +72,7 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
     bitmap_set_range(pages.bitmap, start_index, total_pages);
   }
 
-  page_pool_reserve(&pages, KERNEL_PHYSICAL_BASE,
-                    kernel_end_page - kernel_start_page);
+  page_pool_reserve(&pages, 0, kernel_end_page - kernel_start_page);
   page_pool_reserve(&pages, (uintptr_t)pages.bitmap, bitmap_pages);
 
   return pages;

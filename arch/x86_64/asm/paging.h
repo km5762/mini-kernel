@@ -1,16 +1,14 @@
 #pragma once
 
-#if !defined(__ASSEMBLER__) && !defined(LD_SCRIPT)
-#include <stdint.h>
-#endif
-
 #define KERNEL_VIRTUAL_BASE 0xffffffff80000000
+#define PAGE_BSS_SIZE (8 * 1024 * 1024)
 #define HIGHER_HALF_ADDRESS(address) (address + KERNEL_VIRTUAL_BASE)
 #define LOWER_HALF_ADDRESS(va) (va - KERNEL_VIRTUAL_BASE)
 #define PAGE_BYTES 4096
-#define PAGE_ENTRY_ADDRESS(entry) (entry & 0x000ffffffffff000ULL)
+#define PAGE_ENTRY_ADDRESS(entry) (entry & 0x000ffffffffff000)
 #define PAGE_LARGE_BYTES 2097152
 #define PAGE_TABLE_BYTES 4096
+#define PAGE_TABLE_ENTRIES 512
 #define PAGE_ENTRY_BYTES 8
 #define PAGE_ENTRY_PRESENT 1
 #define PAGE_ENTRY_WRITABLE (1 << 1)
@@ -22,3 +20,9 @@
 
 // void page_map(uintptr_t physical_address, uintptr_t virtual_address,
 //               unsigned int flags);
+//
+#if !defined(__ASSEMBLER__) && !defined(LD_SCRIPT)
+#include <stdint.h>
+
+void paging_init(uintptr_t max_physical_address);
+#endif

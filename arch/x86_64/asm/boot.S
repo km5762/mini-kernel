@@ -63,14 +63,6 @@ gdtr:
 	.short gdt_end - gdt - 1
 	.quad  gdt_physical
 
-	.section .bss.page
-	.balign  4096
-	.equ     page_bss_bytes, 8 * 1024 * 1024
-	.global  page_bss
-
-page_bss:
-	.skip page_bss_bytes
-
 	.section .data.page
 	.equ     flags, (PAGE_ENTRY_PRESENT | PAGE_ENTRY_WRITABLE)
 	.balign  4096
@@ -101,7 +93,7 @@ pdpt_high:
 
 pd_low:
 	.set page_index, 0
-	.rept 512
+	.rept PAGE_TABLE_ENTRIES
 	.quad (page_index * PAGE_LARGE_BYTES) + flags + PAGE_ENTRY_LARGE
 	.set page_index, page_index + 1
 	.endr
@@ -111,7 +103,7 @@ pd_low:
 
 pd_high:
 	.set  page_index, 0
-	.rept 512
+	.rept PAGE_TABLE_ENTRIES
 	.quad (page_index * PAGE_LARGE_BYTES) + flags + PAGE_ENTRY_LARGE
 	.set  page_index, page_index + 1
 	.endr

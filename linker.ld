@@ -50,9 +50,10 @@ SECTIONS
   }
 
   . = ALIGN(4K);
+  page_bss = .;
   .bss.page : AT(ADDR(.bss.page) - KERNEL_VIRTUAL_BASE)
   {
-    *(.bss.page)
+    . += PAGE_BSS_SIZE;
   }
 
   kernel_virtual_end = .;

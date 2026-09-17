@@ -140,7 +140,7 @@ run: iso
 	qemu-system-x86_64 -cdrom $(ISO) $(QEMUFLAGS)
 
 clean:
-	$(RM) -r $(BUILD_ROOT)
+	$(RM) -r $(BUILD_DIR)/*
 
 DEPS := \
 	$(TARGET_OBJS:.o=.d) \

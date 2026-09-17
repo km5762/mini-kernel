@@ -31,3 +31,6 @@ struct multiboot_memory_map {
   const struct multiboot_memory_map_entry *data;
   size_t size;
 };
+
+uintptr_t
+multiboot_find_max_address(const struct multiboot_memory_map *memory_map);

@@ -19,11 +19,12 @@ struct memory_arena memory_arena_create(unsigned char *data, size_t capacity) {
 }
 
 void *memory_arena_allocate(struct memory_arena *arena, size_t size) {
+  void *allocation = arena->current;
   unsigned char *new_current = arena->current + size;
   if (new_current > arena->end) {
     return nullptr;
   }
 
   arena->current = new_current;
-  return new_current;
+  return allocation;
 }

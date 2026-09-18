@@ -173,9 +173,8 @@ _start:
 	cli
 
 # enable pae
-mov eax, cr3
 mov eax, cr4
-or  eax, 0x20
+or  eax, 0x620
 mov cr4, eax
 
 # load page table into cr3

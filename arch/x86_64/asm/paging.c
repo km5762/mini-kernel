@@ -57,7 +57,9 @@ void paging_init(uintptr_t max_physical_address) {
     uintptr_t pd_physical = PAGE_ENTRY_ADDRESS(*pdpt_entry);
     uint64_t *pd = (uint64_t *)HIGHER_HALF_ADDRESS(pd_physical);
     uint64_t *pd_entry = &pd[PD_INDEX(virtual_address)];
-    *pd_entry = physical_address | PAGE_ENTRY_PRESENT | PAGE_ENTRY_WRITABLE |
-                PAGE_ENTRY_LARGE;
+    if (!(*pd_entry & PAGE_ENTRY_PRESENT)) {
+      *pd_entry = physical_address | PAGE_ENTRY_PRESENT | PAGE_ENTRY_WRITABLE |
+                  PAGE_ENTRY_LARGE;
+    }
   }
 }

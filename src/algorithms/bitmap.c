@@ -94,7 +94,7 @@ void bitmap_clear(bitmap_word *bitmap, size_t index) {
   *word &= ~(1u << bit);
 }
 
-int bitmap_find_first_set(struct bitmap_span span) {
+ssize_t bitmap_find_first_set(struct bitmap_span span) {
   for (size_t i = 0; i < span.size; ++i) {
     if (span.data[i] == 0) {
       continue;
@@ -102,5 +102,26 @@ int bitmap_find_first_set(struct bitmap_span span) {
     const int bit = __builtin_ctz(span.data[i]);
     return bit + i * bitmap_word_bits;
   }
+  return -1;
+}
+
+ssize_t bitmap_find_contiguous_set(struct bitmap_span span, size_t size) {
+  if (size == 0)
+    return 0;
+
+  for (size_t i = 0; i < span.size; ++i) {
+    bitmap_word map_word = span.data[i];
+
+    for (size_t shift = 1; shift < size; ++shift) {
+      map_word &= (map_word >> 1);
+    }
+
+    if (map_word != 0) {
+      int trailing_zeros = __builtin_ctzll(map_word);
+
+      return i * bitmap_word_bits + trailing_zeros;
+    }
+  }
+
   return -1;
 }

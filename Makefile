@@ -20,6 +20,7 @@ UNITY_DIR  := unity
 ARCH_DIR := arch/$(ARCH)
 
 COMMON_C_SRCS := $(shell find $(SRC_DIR) -name '*.c')
+HOST_C_SRCS := $(filter-out $(SRC_DIR)/kernel.c,$(COMMON_C_SRCS))
 ARCH_C_SRCS := $(shell find $(ARCH_DIR) -name '*.c')
 ARCH_ASM_SRCS := $(shell find $(ARCH_DIR) -name '*.S')
 
@@ -29,7 +30,7 @@ TARGET_OBJS := \
 	$(ARCH_ASM_SRCS:$(ARCH_DIR)/%.S=$(TARGET_DIR)/arch/$(ARCH)/%.o)
 
 HOST_OBJS := \
-	$(COMMON_C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
+	$(HOST_C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
 
 TEST_SRCS := \
     $(filter-out $(TEST_UTIL_DIR)/%,$(shell find $(TEST_DIR) -name '*.c'))
@@ -65,7 +66,7 @@ TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=large -mno-red-zone -M
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
-	-MMD -MP
+	-MMD -MP -fno-builtin
 
 ELF := $(BUILD_ROOT)/$(ELF_NAME)
 ISO := $(BUILD_ROOT)/$(ISO_NAME)

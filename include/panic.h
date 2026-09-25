@@ -16,7 +16,7 @@ struct panic_handler {
 
 struct panic_handler panic_create_handler_terminal(struct terminal *terminal);
 
-void panic(const char *message, struct panic_handler *handler, const char *file,
+void panic(const char *message, struct panic_handler handler, const char *file,
            int line, const char *function);
 
 #define PANIC(message, handler)                                                \

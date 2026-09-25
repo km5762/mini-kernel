@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h"
+
 #include <limits.h>
 #include <stddef.h>
 
@@ -15,4 +17,5 @@ void bitmap_set_range(bitmap_word *bitmap, size_t start, size_t size);
 void bitmap_clear_range(bitmap_word *bitmap, size_t start, size_t size);
 void bitmap_set(bitmap_word *bitmap, size_t index);
 void bitmap_clear(bitmap_word *bitmap, size_t index);
-int bitmap_find_first_set(struct bitmap_span span);
+ssize_t bitmap_find_first_set(struct bitmap_span span);
+ssize_t bitmap_find_contiguous_set(struct bitmap_span span, size_t size);

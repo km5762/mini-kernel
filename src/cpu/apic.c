@@ -18,7 +18,7 @@ bool apic_supported() {
 }
 
 void apic_enable(struct panic_handler panic_handler) {
-  ASSERT(apic_supported(), &panic_handler);
+  ASSERT(apic_supported(), panic_handler);
   uint64_t apic_base = msr_get(ia32_apic_base_msr);
   if (!(apic_base & ia32_apic_base_msr_enable)) {
     msr_set(ia32_apic_base_msr, apic_base | ia32_apic_base_msr_enable);

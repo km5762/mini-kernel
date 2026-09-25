@@ -32,8 +32,8 @@ struct panic_handler panic_create_handler_terminal(struct terminal *terminal) {
   return handler;
 }
 
-void panic(const char *message, struct panic_handler *handler, const char *file,
+void panic(const char *message, struct panic_handler handler, const char *file,
            int line, const char *function) {
   const struct panic_context context = {file, line, function};
-  handler->handle(message, &context, handler->data);
+  handler.handle(message, &context, handler.data);
 }

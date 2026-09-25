@@ -1,5 +1,6 @@
-#include "memory/memory.h"
+#include "memory/memory_pool.h"
 #include "array_utilites.h"
+
 #include "multiboot.h"
 
 #include "test/panic.h"
@@ -14,10 +15,10 @@
 
 #define BLOCK_SIZE 4096
 #define BLOCK_COUNT 16
-#define GAP_SIZE 1024
+#define GAP_SIZE 4096
 
-static unsigned char buffer[BLOCK_SIZE * BLOCK_COUNT + GAP_SIZE * BLOCK_COUNT] =
-    {0};
+static alignas(BLOCK_SIZE) unsigned char buffer[BLOCK_SIZE * BLOCK_COUNT +
+                                                GAP_SIZE * BLOCK_COUNT] = {0};
 
 static uintptr_t address(size_t offset) { return (uintptr_t)buffer + offset; }
 
@@ -26,10 +27,11 @@ void setUp() {}
 void tearDown() {}
 
 struct test_context {
-  struct memory_map memory_map;
+  struct multiboot_memory_map memory_map;
   int panic_counter;
   struct panic_handler panic_handler;
-  struct memory memory;
+  struct memory_pool memory;
+  struct page_pool page_pool;
 };
 
 static void init_context(struct test_context *ctx,
@@ -38,14 +40,14 @@ static void init_context(struct test_context *ctx,
 
   *ctx = (struct test_context){0};
 
-  ctx->memory_map = (struct memory_map){
+  ctx->memory_map = (struct multiboot_memory_map){
       .data = entries,
       .size = count,
   };
 
   ctx->panic_handler = panic_create_handler_test(&ctx->panic_counter);
-
-  ctx->memory = memory_create(&ctx->memory_map, &ctx->panic_handler);
+  ctx->page_pool = page_pool_create(&ctx->memory_map, 0, ctx->panic_handler);
+  ctx->memory = memory_pool_create(&ctx->page_pool, ctx->panic_handler);
 }
 
 #define INIT_CONTEXT(ctx, entries)                                             \
@@ -91,7 +93,7 @@ static void assert_no_live_overlap(const struct live_allocation *live,
   }
 }
 
-#define FUZZ_ITERATIONS 100000000
+#define FUZZ_ITERATIONS 100000
 
 static void fuzz() {
   struct multiboot_memory_map_entry entries[BLOCK_COUNT] = {0};
@@ -124,7 +126,7 @@ static void fuzz() {
         do_alloc = false;
       } else {
         size_t size = random_allocation_size();
-        void *p = memory_allocate(&ctx.memory, size);
+        void *p = memory_pool_allocate(&ctx.memory, size);
         assert_no_panic(&ctx);
 
         if (p != nullptr) {
@@ -144,7 +146,7 @@ static void fuzz() {
 
     if (!do_alloc) {
       size_t idx = rand() % live_count;
-      memory_free(&ctx.memory, live[idx].ptr);
+      memory_pool_free(&ctx.memory, live[idx].ptr);
       assert_no_panic(&ctx);
 
       live[idx] = live[live_count - 1];

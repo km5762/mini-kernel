@@ -93,7 +93,7 @@ static void assert_no_live_overlap(const struct live_allocation *live,
   }
 }
 
-#define FUZZ_ITERATIONS 100000
+#define FUZZ_ITERATIONS 10000000
 
 static void fuzz() {
   struct multiboot_memory_map_entry entries[BLOCK_COUNT] = {0};
@@ -118,6 +118,7 @@ static void fuzz() {
   struct live_allocation live[MAX_LIVE_ALLOCATIONS] = {0};
   size_t live_count = 0;
   size_t peak_live_count = 0;
+  size_t failed_allocations = 0;
   for (size_t i = 0; i < FUZZ_ITERATIONS; ++i) {
     bool do_alloc = (live_count == 0) || (rand() % 100 < 60);
 
@@ -140,6 +141,8 @@ static void fuzz() {
           }
 
           assert_no_live_overlap(live, live_count);
+        } else {
+          ++failed_allocations;
         }
       }
     }
@@ -155,6 +158,7 @@ static void fuzz() {
     }
   }
 
+  printf("Failed allocations: %zu\n", failed_allocations);
   printf("Current live allocations: %zu\n", live_count);
   printf("Peak live allocations: %zu\n", peak_live_count);
 }

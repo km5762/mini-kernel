@@ -1,10 +1,13 @@
 #include "asm/paging.h"
 #include "memory/memory_arena.h"
+#include "memory/utils.h"
 #include "paging.h"
 #include <stddef.h>
 
+extern uint64_t pd_low[];
 extern uint64_t pml4[];
 extern unsigned char page_bss[];
+extern const uint8_t gdtr_high[];
 
 // void page_map(uintptr_t physical_address, uintptr_t virtual_address,
 //               unsigned int flags, struct page_pool *page_pool) {
@@ -17,6 +20,11 @@ extern unsigned char page_bss[];
 //     *pml4_entry = page_pool_allocate(page_pool);
 //   }
 // }
+
+static void clear_identity_map() {
+  __asm__ volatile("lgdt %0" ::"m"(*gdtr_high) : "memory");
+  memory_zero(pd_low, PAGE_TABLE_BYTES);
+}
 
 void paging_init(uintptr_t max_physical_address) {
   struct memory_arena page_arena = memory_arena_create(page_bss, PAGE_BSS_SIZE);
@@ -61,4 +69,6 @@ void paging_init(uintptr_t max_physical_address) {
                   PAGE_ENTRY_LARGE;
     }
   }
+
+  clear_identity_map();
 }

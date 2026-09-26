@@ -63,6 +63,12 @@ gdtr:
 	.short gdt_end - gdt - 1
 	.quad  gdt_physical
 
+	.global gdtr_high
+
+gdtr_high:
+	.short gdt_end - gdt - 1
+	.quad  gdt
+
 	.section .data.page
 	.equ     flags, (PAGE_ENTRY_PRESENT | PAGE_ENTRY_WRITABLE)
 	.balign  4096

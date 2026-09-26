@@ -44,6 +44,7 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
   const size_t bitmap_pages = MATH_INT_CEILING_DIVIDE(bitmap_bytes, PAGE_BYTES);
   const size_t kernel_end_page =
       MATH_INT_CEILING_DIVIDE(kernel_physical_end, PAGE_BYTES);
+  uintptr_t bitmap_physical_address = 0;
   for (size_t i = 0; i < memory_map->size; ++i) {
     const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
 
@@ -64,17 +65,17 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
       const size_t trailing_contiguous_pages =
           region_end_page - kernel_end_page;
       if (trailing_contiguous_pages >= bitmap_pages) {
-        pages.bitmap.data =
-            (bitmap_word *)align_up(kernel_physical_end, PAGE_BYTES);
+        bitmap_physical_address = align_up(kernel_physical_end, PAGE_BYTES);
         break;
       }
     } else if (total_pages >= bitmap_pages) {
-      pages.bitmap.data = (bitmap_word *)align_up(entry->address, PAGE_BYTES);
+      bitmap_physical_address = align_up(entry->address, PAGE_BYTES);
       break;
     }
   }
 
-  ASSERT(pages.bitmap.data, panic_handler);
+  ASSERT(bitmap_physical_address, panic_handler);
+  pages.bitmap.data = (bitmap_word *)HIGHER_HALF_ADDRESS(bitmap_physical_address);
   pages.bitmap.size = bitmap_words;
 
   for (size_t i = 0; i < memory_map->size; ++i) {
@@ -93,7 +94,7 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
   }
 
   page_pool_reserve(&pages, pages.base, kernel_end_page);
-  page_pool_reserve(&pages, (uintptr_t)pages.bitmap.data, bitmap_pages);
+  page_pool_reserve(&pages, bitmap_physical_address, bitmap_pages);
 
   return pages;
 }

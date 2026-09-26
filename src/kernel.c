@@ -68,12 +68,12 @@ void kernel_main(unsigned long magic, unsigned long multiboot_address) {
   parse_multiboot(HIGHER_HALF_ADDRESS(multiboot_address));
   graphics_set_screen(&kernel.graphics, 0x1e1e2e);
   terminal_print(&kernel.terminal, "HELLO\n");
-  // interrupts_init();
-  // interrupts_set_descriptor(0, zero_handler,
-  //                           INTERRUPT_DESCRIPTOR_FLAGS_TRAP_GATE);
-  // volatile int a = 1;
-  // volatile int b = 0;
-  // volatile int c = a / b;
-  //
-  // (void)c;
+  interrupts_init();
+  interrupts_set_descriptor(0, zero_handler,
+                            INTERRUPT_DESCRIPTOR_FLAGS_TRAP_GATE);
+  volatile int a = 1;
+  volatile int b = 0;
+  volatile int c = a / b;
+
+  (void)c;
 }

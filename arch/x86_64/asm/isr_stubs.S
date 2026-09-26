@@ -6,14 +6,14 @@
 
 isr_stub_\num:
 	call exception_handler
-	iret
+	iretq
 	.endm
 
 	.macro isr_no_err_stub num
 
 isr_stub_\num:
 	call exception_handler
-	iret
+	iretq
 	.endm
 
 	isr_no_err_stub 0

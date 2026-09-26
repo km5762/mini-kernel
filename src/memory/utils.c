@@ -24,7 +24,9 @@ void *memory_copy(void *dest, const void *src, size_t n) {
 
 void *memory_zero(void *ptr, size_t n) { return memory_set(ptr, 0, n); }
 
-void *memset(void *ptr, int value, size_t n)
-    __attribute__((alias("memory_set")));
+void *memset(void *ptr, int value, size_t n) {
+  return memory_set(ptr, (uint8_t)value, n);
+}
+
 void *memcpy(void *dest, const void *src, size_t n)
     __attribute__((alias("memory_copy")));

@@ -1,5 +1,5 @@
+#include "asm/interrupts.h"
 #include "asm/paging.h"
-#include "cpu/interrupts.h"
 #include "graphics/font_bitmaps.h"
 #include "graphics/graphics.h"
 #include "graphics/terminal.h"
@@ -20,7 +20,7 @@ struct kernel {
 
 static struct kernel kernel;
 
-extern uintptr_t kernel_physical_end;
+extern unsigned char kernel_physical_end[];
 
 static void parse_multiboot(size_t address) {
   const struct multiboot_tag *tag = (struct multiboot_tag *)(address + 8);
@@ -45,8 +45,8 @@ static void parse_multiboot(size_t address) {
                                                       entries};
       const uintptr_t max_address = multiboot_find_max_address(&memory_map);
       paging_init(max_address);
-      kernel.page_pool = page_pool_create(&memory_map, kernel_physical_end,
-                                          kernel.panic_handler);
+      kernel.page_pool = page_pool_create(
+          &memory_map, (uintptr_t)kernel_physical_end, kernel.panic_handler);
       kernel.memory_pool =
           memory_pool_create(&kernel.page_pool, kernel.panic_handler);
       break;

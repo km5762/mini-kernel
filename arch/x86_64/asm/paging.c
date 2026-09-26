@@ -1,5 +1,4 @@
 #include "asm/paging.h"
-#include "algorithms/math.h"
 #include "memory/memory_arena.h"
 #include "paging.h"
 #include <stddef.h>

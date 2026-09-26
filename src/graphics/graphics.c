@@ -5,9 +5,10 @@
 #include <stdint.h>
 
 struct graphics graphics_create(const struct framebuffer_info *info) {
-  struct graphics graphics = {
-      (uint32_t *)(uintptr_t)HIGHER_HALF_ADDRESS(info->address), info->width,
-      info->height, info->pitch / 4};
+  uint32_t *framebuffer =
+      (uint32_t *)physical_to_virtual_address((uintptr_t)info->address);
+  struct graphics graphics = {framebuffer, info->width, info->height,
+                              info->pitch / 4};
   return graphics;
 }
 

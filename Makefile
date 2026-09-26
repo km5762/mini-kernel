@@ -62,7 +62,7 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=large -mno-red-zone -MMD -MP
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \

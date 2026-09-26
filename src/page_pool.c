@@ -75,7 +75,8 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
   }
 
   ASSERT(bitmap_physical_address, panic_handler);
-  pages.bitmap.data = (bitmap_word *)HIGHER_HALF_ADDRESS(bitmap_physical_address);
+  pages.bitmap.data =
+      (bitmap_word *)physical_to_virtual_address(bitmap_physical_address);
   pages.bitmap.size = bitmap_words;
 
   for (size_t i = 0; i < memory_map->size; ++i) {

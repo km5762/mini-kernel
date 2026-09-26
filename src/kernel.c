@@ -65,7 +65,7 @@ void zero_handler() {
 
 void kernel_main(unsigned long magic, unsigned long multiboot_address) {
   (void)magic;
-  parse_multiboot(HIGHER_HALF_ADDRESS(multiboot_address));
+  parse_multiboot(kernel_physical_to_virtual_address(multiboot_address));
   graphics_set_screen(&kernel.graphics, 0x1e1e2e);
   terminal_print(&kernel.terminal, "HELLO\n");
   interrupts_init();

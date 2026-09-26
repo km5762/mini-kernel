@@ -60,11 +60,9 @@ SECTIONS
   kernel_physical_end = kernel_virtual_end - KERNEL_VIRTUAL_BASE;
 }
 
-gdt_physical       = gdt       - KERNEL_VIRTUAL_BASE;
-gdtr_physical      = gdtr      - KERNEL_VIRTUAL_BASE;
-pml4_physical      = pml4      - KERNEL_VIRTUAL_BASE;
-pdpt_low_physical  = pdpt_low  - KERNEL_VIRTUAL_BASE;
-pdpt_high_physical = pdpt_high - KERNEL_VIRTUAL_BASE;
-pd_low_physical    = pd_low    - KERNEL_VIRTUAL_BASE;
-pd_high_physical   = pd_high   - KERNEL_VIRTUAL_BASE;
-page_bss_physical        = page_bss        - KERNEL_VIRTUAL_BASE;
+gdt_physical = gdt - KERNEL_VIRTUAL_BASE;
+gdtr_physical = gdtr - KERNEL_VIRTUAL_BASE;
+pml4_physical = pml4 - KERNEL_VIRTUAL_BASE;
+pdpt_physical = pdpt - KERNEL_VIRTUAL_BASE;
+pd_physical = pd - KERNEL_VIRTUAL_BASE;
+page_bss_physical = page_bss - KERNEL_VIRTUAL_BASE;

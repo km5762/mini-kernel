@@ -17,12 +17,14 @@
 #define PAGE_ENTRY_PRESENT 1
 #define PAGE_ENTRY_WRITABLE (1 << 1)
 #define PAGE_ENTRY_LARGE (1 << 7)
+#define PAGE_ENTRY_USER (1 << 2)
 #define PML4_INDEX(va) (((va) >> 39) & 0x1ff)
 #define PDPT_INDEX(va) (((va) >> 30) & 0x1ff)
 #define PD_INDEX(va) (((va) >> 21) & 0x1ff)
 #define PT_INDEX(va) (((va) >> 12) & 0x1ff)
 
 #if !defined(__ASSEMBLER__) && !defined(LD_SCRIPT)
+#include "page_pool.h"
 #include <stdint.h>
 
 // These must be used before paging_init
@@ -48,6 +50,11 @@ static inline uintptr_t virtual_to_physical_address(uintptr_t virtual_address) {
   return virtual_address - physmap_base;
 }
 
-void paging_init(uintptr_t max_physical_address);
+uintptr_t paging_init_direct_map(uintptr_t max_physical_address);
+uintptr_t paging_map(uintptr_t physical_address, uintptr_t virtual_address,
+                     uint64_t flags, struct page_pool *page_pool);
+uintptr_t paging_map_range(uintptr_t physical_address,
+                           uintptr_t virtual_address, size_t pages,
+                           uint64_t flags, struct page_pool *page_pool);
 void flush_tlb();
 #endif

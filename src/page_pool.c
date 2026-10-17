@@ -3,7 +3,7 @@
 #include "algorithms/bitmap.h"
 #include "algorithms/math.h"
 #include "asm/paging.h"
-#include "multiboot.h"
+#include "boot/info.h"
 #include "panic.h"
 
 #include <stdint.h>
@@ -18,7 +18,7 @@ static uintptr_t page_address(uintptr_t base, size_t index) {
   return index * PAGE_BYTES + base;
 }
 
-struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
+struct page_pool page_pool_create(const struct memory_info *memory_map,
                                   uintptr_t kernel_physical_end,
                                   struct panic_handler panic_handler) {
   struct page_pool pages = {0};
@@ -27,7 +27,7 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
   uintptr_t highest_address = 0;
   pages.base = UINTPTR_MAX;
   for (size_t i = 0; i < memory_map->size; ++i) {
-    const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
+    const struct memory_map_region *entry = &memory_map->data[i];
     const uintptr_t end = entry->address + entry->size;
 
     highest_address = MATH_MAX(highest_address, end);
@@ -46,9 +46,9 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
       MATH_INT_CEILING_DIVIDE(kernel_physical_end, PAGE_BYTES);
   uintptr_t bitmap_physical_address = 0;
   for (size_t i = 0; i < memory_map->size; ++i) {
-    const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
+    const struct memory_map_region *entry = &memory_map->data[i];
 
-    if (entry->type != MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE) {
+    if (entry->type != MEMORY_MAP_REGION_AVAILABLE) {
       continue;
     }
 
@@ -80,9 +80,9 @@ struct page_pool page_pool_create(const struct multiboot_memory_map *memory_map,
   pages.bitmap.size = bitmap_words;
 
   for (size_t i = 0; i < memory_map->size; ++i) {
-    const struct multiboot_memory_map_entry *entry = &memory_map->data[i];
+    const struct memory_map_region *entry = &memory_map->data[i];
 
-    if (entry->type != MEMORY_MAP_TAG_ENTRY_TYPE_AVAILABLE) {
+    if (entry->type != MEMORY_MAP_REGION_AVAILABLE) {
       continue;
     }
 

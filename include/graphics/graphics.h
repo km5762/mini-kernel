@@ -1,17 +1,10 @@
 #pragma once
 
 #include "bitmaps.h"
+#include "boot/info.h"
 
 #include <stddef.h>
 #include <stdint.h>
-
-struct framebuffer_info {
-  uint64_t address;
-  uint32_t pitch;
-  uint32_t width;
-  uint32_t height;
-  uint8_t bits_per_pixel;
-};
 
 struct graphics {
   uint32_t *framebuffer;

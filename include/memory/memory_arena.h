@@ -4,7 +4,6 @@
 
 struct memory_arena {
   unsigned char *data;
-  size_t capacity;
   unsigned char *current;
   unsigned char *end;
 };
@@ -12,7 +11,6 @@ struct memory_arena {
 struct memory_arena memory_arena_create(unsigned char *data, size_t capacity) {
   return (struct memory_arena){
       .data = data,
-      .capacity = capacity,
       .current = data,
       .end = data + capacity,
   };

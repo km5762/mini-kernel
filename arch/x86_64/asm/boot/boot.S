@@ -21,6 +21,15 @@ header_start:
 	.long  -(magic + architecture + ( header_end - header_start ))
 	.align 8
 
+# Request ACPI RSDP v2+
+information_request_tag_start:
+    .hword 1                  # MULTIBOOT_HEADER_TAG_INFORMATION_REQUEST
+    .hword 0                  # required
+    .long information_request_tag_end - information_request_tag_start
+    .long 14                  # MULTIBOOT_TAG_TYPE_ACPI_NEW
+information_request_tag_end:
+    .align 8
+
 framebuffer_tag_start:
 	.hword framebuffer_tag_type
 	.hword framebuffer_tag_flags

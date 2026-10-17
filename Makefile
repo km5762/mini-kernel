@@ -15,7 +15,9 @@ HOST_DIR   := $(BUILD_ROOT)/host
 TEST_DIR      := test
 TEST_UTIL_DIR := $(TEST_DIR)/utilities
 
-UNITY_DIR  := unity
+EXTERNAL_DIR = external
+UNITY_DIR  := $(EXTERNAL_DIR)/unity
+UACPI_DIR  := $(EXTERNAL_DIR)/uacpi
 
 ARCH_DIR := arch/$(ARCH)
 
@@ -23,11 +25,13 @@ COMMON_C_SRCS := $(shell find $(SRC_DIR) -name '*.c')
 HOST_C_SRCS := $(filter-out $(SRC_DIR)/kernel.c,$(COMMON_C_SRCS))
 ARCH_C_SRCS := $(shell find $(ARCH_DIR) -name '*.c')
 ARCH_ASM_SRCS := $(shell find $(ARCH_DIR) -name '*.S')
+UACPI_C_SRCS := $(shell find $(UACPI_DIR) -name '*.c')
 
 TARGET_OBJS := \
 	$(COMMON_C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
 	$(ARCH_C_SRCS:$(ARCH_DIR)/%.c=$(TARGET_DIR)/arch/$(ARCH)/%.o) \
-	$(ARCH_ASM_SRCS:$(ARCH_DIR)/%.S=$(TARGET_DIR)/arch/$(ARCH)/%.o)
+	$(ARCH_ASM_SRCS:$(ARCH_DIR)/%.S=$(TARGET_DIR)/arch/$(ARCH)/%.o) \
+	$(UACPI_C_SRCS:$(UACPI_DIR)/%.c=$(TARGET_DIR)/$(EXTERNAL_DIR)/%.o)
 
 HOST_OBJS := \
 	$(HOST_C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
@@ -62,7 +66,7 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP -I$(EXTERNAL_DIR) -DUACPI_USE_BUILTIN_STRING -DUACPI_BAREBONES_MODE
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
@@ -96,6 +100,10 @@ $(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.c
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 
 $(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.S
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+
+$(TARGET_DIR)/$(EXTERNAL_DIR)/%.o: $(UACPI_DIR)/%.c
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 

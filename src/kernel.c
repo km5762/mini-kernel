@@ -2,6 +2,7 @@
 #include "algorithms/alignment.h"
 #include "asm/paging.h"
 #include "boot/info.h"
+#include "debug/logging.h"
 #include "graphics/font_bitmaps.h"
 #include "graphics/graphics.h"
 #include "graphics/terminal.h"
@@ -51,7 +52,7 @@ void kernel_main(unsigned long magic, unsigned long multiboot_address) {
   kernel.graphics = graphics_create(&boot_info.framebuffer);
   kernel.terminal = terminal_create(&kernel.graphics, &uni2_terminus16);
   kernel.panic_handler = panic_create_handler_terminal(&kernel.terminal);
-
+  kernel.log_handler = log_create_handler_terminal(&kernel.terminal);
   uacpi_set_kernel(&kernel);
   uacpi_set_rsdp(
       kernel_virtual_to_physical_address((uintptr_t)boot_info.hardware.xsdp));
@@ -60,6 +61,7 @@ void kernel_main(unsigned long magic, unsigned long multiboot_address) {
   uacpi_status st =
       uacpi_setup_early_table_access(early_buf, sizeof(early_buf));
   if (uacpi_unlikely_error(st)) { /* uacpi_status_to_string(st) */
+    LOG_ERROR(kernel.log_handler, "%s", uacpi_status_to_string(st));
   }
   //
   // uacpi_table tbl = {0};

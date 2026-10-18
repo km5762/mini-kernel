@@ -31,7 +31,8 @@ TARGET_OBJS := \
 	$(COMMON_C_SRCS:$(SRC_DIR)/%.c=$(TARGET_DIR)/%.o) \
 	$(ARCH_C_SRCS:$(ARCH_DIR)/%.c=$(TARGET_DIR)/arch/$(ARCH)/%.o) \
 	$(ARCH_ASM_SRCS:$(ARCH_DIR)/%.S=$(TARGET_DIR)/arch/$(ARCH)/%.o) \
-	$(UACPI_C_SRCS:$(UACPI_DIR)/%.c=$(TARGET_DIR)/$(EXTERNAL_DIR)/%.o)
+	$(UACPI_C_SRCS:$(UACPI_DIR)/%.c=$(TARGET_DIR)/$(EXTERNAL_DIR)/%.o) \
+	$(TARGET_DIR)/$(EXTERNAL_DIR)/printf/printf.o
 
 HOST_OBJS := \
 	$(HOST_C_SRCS:$(SRC_DIR)/%.c=$(HOST_DIR)/%.o)
@@ -66,7 +67,7 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP -I$(EXTERNAL_DIR) -DUACPI_USE_BUILTIN_STRING -DUACPI_BAREBONES_MODE
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP -I$(EXTERNAL_DIR) -DUACPI_USE_BUILTIN_STRING -DUACPI_BAREBONES_MODE -DUACPI_FORMATTED_LOGGING
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
@@ -104,6 +105,10 @@ $(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.S
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 
 $(TARGET_DIR)/$(EXTERNAL_DIR)/%.o: $(UACPI_DIR)/%.c
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+
+$(TARGET_DIR)/$(EXTERNAL_DIR)/printf/printf.o: $(EXTERNAL_DIR)/printf/printf.c
 	@mkdir -p $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
 

@@ -16,4 +16,6 @@ struct terminal {
 
 struct terminal terminal_create(const struct graphics *graphics,
                                 const struct font_bitmaps *font_bitmaps);
+
+void terminal_put(struct terminal *terminal, char glyph);
 void terminal_print(struct terminal *terminal, const char *line);

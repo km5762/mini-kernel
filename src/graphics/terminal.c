@@ -10,7 +10,7 @@ struct terminal terminal_create(const struct graphics *graphics,
   return terminal;
 }
 
-static void draw_glyph(struct terminal *terminal, char glyph) {
+void terminal_put(struct terminal *terminal, char glyph) {
   if (glyph == '\n') {
     terminal->y += terminal->line_height;
     terminal->x = 0;
@@ -24,6 +24,6 @@ static void draw_glyph(struct terminal *terminal, char glyph) {
 
 void terminal_print(struct terminal *terminal, const char *line) {
   for (size_t i = 0; line[i] != '\0'; ++i) {
-    draw_glyph(terminal, line[i]);
+    terminal_put(terminal, line[i]);
   }
 }

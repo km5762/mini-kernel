@@ -9,6 +9,7 @@
 #include "memory/memory_pool.h"
 #include "memory/virtual_address_arena.h"
 #include "panic.h"
+#include "uacpi/acpi.h"
 #include "uacpi/status.h"
 #include "uacpi/tables.h"
 #include "uacpi/uacpi.h"
@@ -62,19 +63,70 @@ void kernel_main(unsigned long magic, unsigned long multiboot_address) {
       uacpi_setup_early_table_access(early_buf, sizeof(early_buf));
   if (uacpi_unlikely_error(st)) { /* uacpi_status_to_string(st) */
     LOG_ERROR(kernel.log_handler, "%s", uacpi_status_to_string(st));
+    return;
   }
-  //
-  // uacpi_table tbl = {0};
-  // st = uacpi_table_find_by_signature("MADT", &tbl);
-  // if (uacpi_likely_success(st)) {
-  //   struct acpi_madt *madt = (struct acpi_madt *)tbl.ptr;
-  //   // parse entries...
-  //   uacpi_table_unref(&tbl);
-  // }
 
-  for (;;)
+  uacpi_table tbl = {0};
+  st = uacpi_table_find_by_signature("APIC", &tbl);
+  if (uacpi_unlikely_error(st)) {
+    LOG_ERROR(kernel.log_handler, "%s", uacpi_status_to_string(st));
+    return;
+  }
+
+  struct acpi_madt *madt = (struct acpi_madt *)tbl.ptr;
+  uint64_t lapic_base = madt->local_interrupt_controller_address;
+  bool pic_present = madt->flags & ACPI_PCAT_COMPAT;
+
+  uint8_t *cur = (uint8_t *)madt->entries;
+  uint8_t *end = (uint8_t *)madt + madt->hdr.length;
+
+  while (cur + sizeof(struct acpi_entry_hdr) <= end) {
+    struct acpi_entry_hdr *hdr = (struct acpi_entry_hdr *)cur;
+    if (hdr->length < sizeof(*hdr) || cur + hdr->length > end)
+      break; // malformed, bail out
+
+    LOG_INFO(kernel.log_handler, "%d", hdr->type);
+
+    switch (hdr->type) {
+    case ACPI_MADT_ENTRY_TYPE_LAPIC: {
+      struct acpi_madt_lapic *e = (struct acpi_madt_lapic *)hdr;
+      break;
+    }
+    case ACPI_MADT_ENTRY_TYPE_IOAPIC: {
+      struct acpi_madt_ioapic *e = (struct acpi_madt_ioapic *)hdr;
+      break;
+    }
+    case ACPI_MADT_ENTRY_TYPE_INTERRUPT_SOURCE_OVERRIDE: {
+      struct acpi_madt_interrupt_source_override *e =
+          (struct acpi_madt_interrupt_source_override *)hdr;
+      LOG_INFO(kernel.log_handler, "source: %d, gsi: %d", e->source, e->gsi);
+      break;
+    }
+    case ACPI_MADT_ENTRY_TYPE_LAPIC_ADDRESS_OVERRIDE: {
+      struct acpi_madt_lapic_address_override *e =
+          (struct acpi_madt_lapic_address_override *)hdr;
+      break;
+    }
+    case ACPI_MADT_ENTRY_TYPE_LOCAL_X2APIC: {
+      struct acpi_madt_x2apic *e = (struct acpi_madt_x2apic *)hdr;
+      break;
+    }
+    case ACPI_MADT_ENTRY_TYPE_LAPIC_NMI:
+    case ACPI_MADT_ENTRY_TYPE_NMI_SOURCE:
+    case ACPI_MADT_ENTRY_TYPE_LOCAL_X2APIC_NMI:
+      // configure NMI pins if you care
+      break;
+    default:
+      break; // skip unknown types safely via hdr->length
+    }
+
+    cur += hdr->length;
+  }
+
+  uacpi_table_unref(&tbl);
+
+  while (true)
     ;
-
   // idt_init();
   // lapic = apic_enable(kernel.panic_handler);
   // interrupts_enable();

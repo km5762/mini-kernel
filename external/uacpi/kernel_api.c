@@ -2,10 +2,12 @@
 #include "algorithms/alignment.h"
 #include "algorithms/math.h"
 #include "asm/paging.h"
+#include "debug/logging.h"
 #include "graphics/terminal.h"
 #include "kernel.h"
 #include "memory/virtual_address_arena.h"
 #include "page_pool.h"
+#include "uacpi/log.h"
 #include "uacpi/platform/types.h"
 #include "uacpi/types.h"
 
@@ -63,9 +65,26 @@ void uacpi_kernel_log(uacpi_log_level level, const uacpi_char *message) {
   terminal_print(&kernel->terminal, message);
 }
 #else
+static enum log_level uacpi_convert_log_level(enum uacpi_log_level level) {
+  switch (level) {
+  case UACPI_LOG_DEBUG:
+  case UACPI_LOG_TRACE:
+  case UACPI_LOG_INFO:
+    return LOG_LEVEL_INFO;
+  case UACPI_LOG_WARN:
+    return LOG_LEVEL_WARNING;
+  case UACPI_LOG_ERROR:
+    return LOG_LEVEL_ERROR;
+  }
+  return LOG_LEVEL_ERROR;
+}
+
 void uacpi_kernel_log(uacpi_log_level level, const uacpi_char *format, ...) {
-  (void)level;
-  (void)format;
+  va_list args;
+  va_start(args, format);
+  log_write_va(kernel->log_handler, uacpi_convert_log_level(level), nullptr,
+               format, args);
+  va_end(args);
 }
 #endif
 

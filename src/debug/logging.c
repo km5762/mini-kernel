@@ -1,21 +1,21 @@
 #include "debug/logging.h"
+#include "debug/location.h"
 #include "graphics/terminal.h"
 #include "printf/printf.h"
 #include <stdarg.h>
 
 void log_write(struct log_handler handler, enum log_level level,
-               const char *file, int line, const char *function,
-               const char *fmt, ...) {
-  struct log_context ctx = {
-      .file = file,
-      .line = line,
-      .function = function,
-  };
-
+               const struct debug_location *location, const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  handler.handle(handler.data, level, &ctx, fmt, args);
+  handler.handle(handler.data, level, location, fmt, args);
   va_end(args);
+}
+
+void log_write_va(struct log_handler handler, enum log_level level,
+                  const struct debug_location *location, const char *fmt,
+                  va_list args) {
+  handler.handle(handler.data, level, location, fmt, args);
 }
 
 static void terminal_out(char c, void *arg) {
@@ -35,12 +35,16 @@ static const char *level_name(enum log_level level) {
 }
 
 static void log_handler_terminal(void *data, enum log_level level,
-                                 const struct log_context *ctx, const char *fmt,
-                                 va_list args) {
+                                 const struct debug_location *location,
+                                 const char *fmt, va_list args) {
   struct terminal *terminal = data;
 
-  fctprintf(terminal_out, terminal, "[%s] %s:%d %s: ", level_name(level),
-            ctx->file, ctx->line, ctx->function);
+  if (location) {
+    fctprintf(terminal_out, terminal, "[%s] %s:%d %s: ", level_name(level),
+              location->file, location->line, location->function);
+  } else {
+    fctprintf(terminal_out, terminal, "[%s]: ", level_name(level));
+  }
 
   vfctprintf(terminal_out, terminal, fmt, args);
 

@@ -20,6 +20,7 @@ UNITY_DIR  := $(EXTERNAL_DIR)/unity
 UACPI_DIR  := $(EXTERNAL_DIR)/uacpi
 
 ARCH_DIR := arch/$(ARCH)
+ARCH_INCLUDE_DIR := $(ARCH_DIR)/include
 
 COMMON_C_SRCS := $(shell find $(SRC_DIR) -name '*.c')
 HOST_C_SRCS := $(filter-out $(SRC_DIR)/kernel.c,$(COMMON_C_SRCS))
@@ -51,7 +52,7 @@ TEST_UTIL_OBJS := \
 
 UNITY_OBJ := $(BUILD_ROOT)/test/unity.o
 
-COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -I$(ARCH_DIR) -Iinclude
+COMMON_CFLAGS := -std=gnu2x -Wall -Wextra -Iinclude
 LDFLAGS := -ffreestanding -nostdlib
 ifeq ($(BUILD),debug)
 	COMMON_CFLAGS += -O0 -g
@@ -67,11 +68,13 @@ else
 	ELF_NAME := kernel.elf
 	ISO_NAME := kernel.iso
 endif
-TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP -I$(EXTERNAL_DIR) -DUACPI_USE_BUILTIN_STRING -DUACPI_BAREBONES_MODE -DUACPI_FORMATTED_LOGGING -DUACPI_END_OF_LOG_MSG=\"\"
+TARGET_CFLAGS := $(COMMON_CFLAGS) -ffreestanding -mcmodel=kernel -mno-red-zone -MMD -MP -I$(ARCH_INCLUDE_DIR) -I$(EXTERNAL_DIR) -DUACPI_USE_BUILTIN_STRING -DUACPI_BAREBONES_MODE -DUACPI_FORMATTED_LOGGING -DUACPI_END_OF_LOG_MSG=\"\"
 HOST_CFLAGS := \
 	$(COMMON_CFLAGS) \
 	-I$(UNITY_DIR) \
 	-MMD -MP -fno-builtin
+ARCH_TARGET_CFLAGS := $(TARGET_CFLAGS) -I$(ARCH_DIR)
+LINKER_CFLAGS := $(COMMON_CFLAGS) -I$(ARCH_INCLUDE_DIR)
 
 ELF := $(BUILD_ROOT)/$(ELF_NAME)
 ISO := $(BUILD_ROOT)/$(ISO_NAME)
@@ -84,9 +87,9 @@ all: iso
 $(ELF): $(TARGET_OBJS) $(LINKER_SCRIPT)
 	$(TARGET_CC) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(TARGET_OBJS) -lgcc
 
-$(LINKER_SCRIPT): linker.ld $(ARCH_DIR)/asm/paging.h
+$(LINKER_SCRIPT): linker.ld $(ARCH_INCLUDE_DIR)/asm/paging.h
 	@mkdir -p $(@D)
-	$(TARGET_CC) -E -P -x c $(COMMON_CFLAGS) -DLD_SCRIPT $< -o $@
+	$(TARGET_CC) -E -P -x c $(LINKER_CFLAGS) -DLD_SCRIPT $< -o $@
 
 $(TARGET_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
@@ -98,11 +101,11 @@ $(TARGET_DIR)/%.o: $(SRC_DIR)/%.S
 
 $(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.c
 	@mkdir -p $(@D)
-	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+	$(TARGET_CC) $(ARCH_TARGET_CFLAGS) -c $< -o $@
 
 $(TARGET_DIR)/arch/$(ARCH)/%.o: $(ARCH_DIR)/%.S
 	@mkdir -p $(@D)
-	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+	$(TARGET_CC) $(ARCH_TARGET_CFLAGS) -c $< -o $@
 
 $(TARGET_DIR)/$(EXTERNAL_DIR)/%.o: $(UACPI_DIR)/%.c
 	@mkdir -p $(@D)

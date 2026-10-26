@@ -94,6 +94,7 @@ void kernel_main(unsigned long magic, unsigned long multiboot_address) {
     }
     case ACPI_MADT_ENTRY_TYPE_IOAPIC: {
       struct acpi_madt_ioapic *e = (struct acpi_madt_ioapic *)hdr;
+      LOG_INFO(kernel.log_handler, "gsi_base: %d", e->gsi_base);
       break;
     }
     case ACPI_MADT_ENTRY_TYPE_INTERRUPT_SOURCE_OVERRIDE: {

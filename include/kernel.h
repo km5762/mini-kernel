@@ -14,7 +14,7 @@ struct kernel {
   struct page_pool page_pool;
   struct panic_handler panic_handler;
   struct log_handler log_handler;
-  struct interrupt_dispatcher interrupt_dispatcher;
+  // struct interrupt_dispatcher interrupt_dispatcher;
   struct virtual_address_arena virtual_address_arena;
   uintptr_t direct_map_physical_end;
 };

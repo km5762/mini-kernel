@@ -2,7 +2,6 @@
 #include "algorithms/alignment.h"
 #include "memory/memory_arena.h"
 #include "memory/utils.h"
-#include "paging.h"
 #include <stddef.h>
 
 extern uint64_t pml4[];

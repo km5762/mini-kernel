@@ -1,5 +1,5 @@
 #include "boot/info.h"
-#include "asm/boot/multiboot.h"
+#include "boot/multiboot.h"
 
 void boot_info_extract(uintptr_t address, struct boot_info *info) {
   const struct multiboot_tag *tag = (struct multiboot_tag *)(address + 8);
